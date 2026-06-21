@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Israel System</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#001a66;
+color:white;
+}
+
+.bg{
+position:fixed;
+width:200%;
+height:200%;
+background:linear-gradient(white,#0038b8,white);
+opacity:0.2;
+animation:move 10s linear infinite;
+z-index:-1;
+}
+
+@keyframes move{
+0%{transform:translate(0,0);}
+100%{transform:translate(-30%,-20%);}
+}
+
+.menu{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+justify-content:center;
+padding:10px;
+}
+
+button{
+background:#0038b8;
+color:white;
+border:none;
+padding:10px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.box{
+margin:15px;
+padding:15px;
+background:rgba(0,0,0,0.4);
+border-radius:12px;
+}
+
+.card{
+background:rgba(255,255,255,0.15);
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+}
+
+img{
+width:70px;
+height:70px;
+object-fit:cover;
+border-radius:10px;
+}
+
+.section{display:none;}
+
+/* 📸 скрытый input */
+#fileInput{
+display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="menu">
+<button onclick="show('home')">Главная</button>
+<button onclick="show('citizens')">Граждане</button>
+<button onclick="show('wanted')">Розыск</button>
+<button onclick="show('mossad')">Моссад</button>
+<button onclick="show('interpol')">Интерпол</button>
+<button onclick="show('holidays')">Праздники</button>
+<button onclick="login()">🔐 Админ</button>
+</div>
+
+<div id="home" class="box section" style="display:block;">
+<h2>🇮🇱 Шалом</h2>
+<p>Публичная система Israel RP</p>
+</div>
+
+<!-- 📸 файл -->
+<input type="file" id="fileInput" accept="image/*">
+
+<div id="citizens" class="box section"></div>
+<div id="wanted" class="box section"></div>
+<div id="mossad" class="box section"></div>
+<div id="interpol" class="box section"></div>
+<div id="holidays" class="box section"></div>
+
+<script>
+
+let ADMIN=false;
+const PASS="ISRAEL-333";
+
+let db={
+citizens:[],
+wanted:[],
+mossad:[],
+interpol:[],
+holidays:[]
+};
+
+function show(id){
+document.querySelectorAll(".section").forEach(x=>x.style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+function login(){
+let p=prompt("Пароль");
+
+if(p===PASS){
+ADMIN=true;
+alert("Админ режим включен");
+renderAll();
+}
+}
+
+/* ➕ добавить с фото из галереи */
+function add(cat){
+if(!ADMIN) return;
+
+let name=prompt("Имя");
+let age=prompt("Возраст / инфо");
+let role=prompt("Должность / причина");
+
+let file=document.getElementById("fileInput").files[0];
+
+if(file){
+let reader=new FileReader();
+
+reader.onload=function(){
+
+db[cat].push({
+id:Date.now(),
+name,
+age,
+role,
+photo:reader.result
+});
+
+save();
+renderAll();
+
+};
+
+reader.readAsDataURL(file);
+
+}else{
+
+db[cat].push({
+id:Date.now(),
+name,
+age,
+role,
+photo:""
+});
+
+save();
+renderAll();
+
+}
+}
+
+function del(cat,id){
+if(!ADMIN) return;
+db[cat]=db[cat].filter(x=>x.id!==id);
+save();
+renderAll();
+}
+
+function edit(cat,id){
+if(!ADMIN) return;
+
+let x=db[cat].find(i=>i.id===id);
+
+x.name=prompt("Имя",x.name);
+x.age=prompt("Возраст/инфо",x.age);
+x.role=prompt("Должность/причина",x.role);
+
+save();
+renderAll();
+}
+
+function save(){
+localStorage.setItem("israelDB",JSON.stringify(db));
+}
+
+function load(){
+let s=localStorage.getItem("israelDB");
+if(s) db=JSON.parse(s);
+}
+
+function render(cat){
+let el=document.getElementById(cat);
+
+el.innerHTML=`
+<h2>${cat.toUpperCase()}</h2>
+${ADMIN?<button onclick="add('${cat}')">➕ Добавить</button>:""}
+`+
+
+db[cat].map(x=>`
+<div class="card">
+
+${x.photo?<img src="${x.photo}">:""}
+
+<h3>${x.name}</h3>
+<p>${x.age}</p>
+<p>${x.role}</p>
+
+${ADMIN?`
+<button onclick="del('${cat}',${x.id})">❌</button>
+<button onclick="edit('${cat}',${x.id})">✏️</button>
+`:""}
+
+</div>
+`).join("");
+}
+
+function renderAll(){
+render("citizens");
+render("wanted");
+render("mossad");
+render("interpol");
+render("holidays");
+}
+
+load();
+renderAll();
+
+</script>
+
+</body>
+</html>
