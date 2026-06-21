@@ -6,6 +6,10 @@
     <title>Еврейская община | Ukraine RP | Портал</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Скрипт Telegram Web App (для чтения initData) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
         /* ================= ДИЗАЙН И СТИЛИ ================= */
         :root {
@@ -49,10 +53,8 @@
         .page-header { padding: 40px 20px; text-align: center; background: var(--surface); border-bottom: 1px solid #ddd; margin-bottom: 30px; }
         .agency-logo { width: 110px; margin-bottom: 15px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
         
-        /* Моссад Блок */
         #mossad .page-header { background: var(--mossad-dark); color: white; border-bottom: 3px solid var(--gold); }
         .lore-box { max-width: 900px; margin: 20px auto 0; background: rgba(255,255,255,0.05); padding: 25px; border-radius: 8px; border-left: 4px solid var(--gold); text-align: justify; font-size: 0.95rem; line-height: 1.7; color: #dcdde1; }
-        
         #interpol .page-header { background: var(--interpol-dark); color: white; border-bottom: 3px solid #00a8ff; }
 
         /* Таблицы */
@@ -152,14 +154,10 @@
             <div class="page-header">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Seal_of_the_Mossad.svg/800px-Seal_of_the_Mossad.svg.png" class="agency-logo" alt="Моссад">
                 <h2 style="color:var(--gold); font-size: 2.2rem;">המנכ"ל | МОССАД</h2>
-                
                 <div class="lore-box">
-                    <p><strong>«Моссад»</strong> — это внешняя спецслужба Израиля, занимающаяся разведкой, контртеррористическими и тайными операциями. В переводе с иврита — <em>«ха-Мосад ле-Модиин у-ле-Тафкидим Меюхадим»</em> — означает «Ведомство разведки и специальных операций».</p>
-                    <br>
-                    <p>Служба внешней разведки Израиля неподконтрольна кнессету (парламенту) и напрямую подчиняется премьер-министру. Она имеет гражданскую структуру и не подчиняется ни одному из родов войск, однако требует от кандидатов опыта военной службы. Наряду с АМАН (Управление военной разведки) и ШАБАК (Служба внутренней безопасности) является одной из трех основных спецслужб еврейского государства. В ее задачи входят сбор разведывательных данных и физическое уничтожение врагов Израиля.</p>
+                    <p><strong>«Моссад»</strong> — это внешняя спецслужба Израиля, занимающаяся разведкой, контртеррористическими и тайными операциями.</p>
                 </div>
             </div>
-            
             <div class="table-container" style="background: var(--mossad-dark); color: white; border: 1px solid #333;">
                 <div class="table-controls">
                     <input type="text" class="search-box" placeholder="Поиск в базе Моссад..." onkeyup="searchTable(this, 'mossadBody')" style="background:#222; color:white; border-color: #444;">
@@ -199,14 +197,14 @@
                 
                 <div id="errorBox" class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> <span id="errorText"></span></div>
 
-                <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Авторизация производится строго через официального бота Telegram. Сервер автоматически сверяет ваш ID.</p>
+                <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Синхронизация через Firebase включена. Откройте этот сайт через <strong>Telegram Web App</strong> (внутри бота), чтобы система автоматически считала ваш ID (initData).</p>
                 
-                <!-- TELEGRAM WIDGET -->
+                <!-- Виджет оставлен как резервный вариант для входа с ПК -->
                 <div id="tg-widget-container">
                     <script async src="https://telegram.org/js/telegram-widget.js?22" 
                             data-telegram-login="israeluabot" 
                             data-size="large" 
-                            data-onauth="onTelegramAuth(user)" 
+                            data-onauth="onTelegramAuthFallback(user)" 
                             data-request-access="write"></script>
                 </div>
             </div>
@@ -215,27 +213,13 @@
                 <i class="fa-solid fa-check-double" style="font-size: 3.5rem; color: var(--success); margin-bottom: 20px;"></i>
                 <h3 style="color: var(--success); margin: 10px 0;">Доступ разрешен</h3>
                 <p style="font-size: 1.1rem;">Агент: <strong id="adminName"></strong></p>
-                <p style="margin: 15px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован.</p>
-                
+                <p style="margin: 15px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Изменения моментально синхронизируются у всех игроков через облако Firebase.</p>
                 <button class="btn btn-del" onclick="logout()" style="width: 100%; justify-content: center; padding: 12px; margin-bottom: 20px;"><i class="fa-solid fa-right-from-bracket"></i> Завершить сеанс связи</button>
-
-                <!-- ПАНЕЛЬ УПРАВЛЕНИЯ JSON -->
-                <div style="padding-top: 20px; border-top: 1px solid #eee;">
-                    <h4 style="margin-bottom: 15px; color: var(--israel-blue);"><i class="fa-solid fa-database"></i> Управление базой данных</h4>
-                    <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px; text-align: left;">Т.к. сайт размещен на GitHub (без сервера), делитесь JSON-файлом с другими администраторами, чтобы синхронизировать базу.</p>
-                    
-                    <div style="display: flex; gap: 10px; flex-direction: column;">
-                        <button class="btn" style="background: #0984e3; width: 100%; justify-content: center;" onclick="exportJSON()"><i class="fa-solid fa-download"></i> Скачать базу (.json)</button>
-                        <button class="btn" style="background: #e17055; width: 100%; justify-content: center;" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-upload"></i> Загрузить базу (.json)</button>
-                        <!-- Скрытый инпут для файла -->
-                        <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importJSON(event)">
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно для добавления записей -->
+    <!-- Модальное окно -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <h3 id="modalTitle" style="margin-bottom: 20px; color: var(--israel-blue);">Добавить запись</h3>
@@ -247,22 +231,84 @@
         </div>
     </div>
 
+    <!-- Модуль Firebase (v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // =========================================================
+        // ⚙️ ВСТАВЬ СВОЙ КОНФИГ FIREBASE СЮДА
+        // =========================================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyBYxeqPS_U_BDa91-jlXDPMIR0kBVvb9Ho",
+          authDomain: "wqeqws.firebaseapp.com",
+          projectId: "wqeqws",
+          storageBucket: "wqeqws.firebasestorage.app",
+          messagingSenderId: "155361925374",
+          appId: "1:155361925374:web:a1babe2816ea40e95dedaf"
+        };
+        // =========================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dbRef = ref(db, 'ukraine_rp_database');
+
+        // Глобальная база
+        window.DB = { holidays: [], citizens: [], mossad: [], interpol: [] };
+
+        // Слушаем изменения из Firebase в реальном времени
+        onValue(dbRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                window.DB = {
+                    holidays: data.holidays || [],
+                    citizens: data.citizens || [],
+                    mossad: data.mossad || [],
+                    interpol: data.interpol || []
+                };
+            }
+            window.renderTables(); // Обновляем таблицы при любых изменениях в облаке
+        });
+
+        // Функция сохранения данных в Firebase
+        window.saveToFirebase = function() {
+            set(dbRef, window.DB).catch((error) => {
+                alert("Ошибка синхронизации с базой: " + error.message);
+            });
+        }
+    </script>
+
+    <!-- Основная логика -->
     <script>
-        // ================= JAVASCRIPT ЛОГИКА =================
         const ADMIN_IDS = [
             5493487232, 1482508992, 6025730893, 8064092076, 5688779177, 1431122546, 1874762407
         ];
 
         let IS_ADMIN = localStorage.getItem('rp_admin_logged') === 'true';
 
-        window.onTelegramAuth = function(user) {
+        // Проверка через Telegram Web App (initData)
+        const tg = window.Telegram.WebApp;
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const userId = tg.initDataUnsafe.user.id;
+            if (ADMIN_IDS.includes(Number(userId))) {
+                localStorage.setItem('rp_admin_logged', 'true');
+                localStorage.setItem('rp_admin_name', tg.initDataUnsafe.user.first_name);
+                IS_ADMIN = true;
+            } else {
+                IS_ADMIN = false;
+                localStorage.removeItem('rp_admin_logged');
+            }
+        }
+
+        // Резервный вход (для браузера на ПК)
+        window.onTelegramAuthFallback = function(user) {
             if (ADMIN_IDS.includes(Number(user.id))) {
                 localStorage.setItem('rp_admin_logged', 'true');
                 localStorage.setItem('rp_admin_name', user.first_name);
                 updateAdminUI(user.first_name);
             } else {
                 document.getElementById('errorBox').style.display = 'block';
-                document.getElementById('errorText').innerText = `Доступ запрещен. Ваш ID (${user.id}) не найден в базе.`;
+                document.getElementById('errorText').innerText = `Доступ запрещен. Ваш ID (${user.id}) не найден.`;
             }
         };
 
@@ -273,7 +319,7 @@
             document.getElementById('adminName').innerText = name || localStorage.getItem('rp_admin_name') || 'Агент';
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
             document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'inline-flex');
-            renderTables();
+            window.renderTables();
         }
 
         function logout() {
@@ -285,55 +331,7 @@
             document.getElementById('errorBox').style.display = 'none';
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'none');
-            renderTables();
-        }
-
-        // --- БАЗА ДАННЫХ (LOCALSTORAGE) ---
-        let DB = JSON.parse(localStorage.getItem('UkraineRP_DB')) || {
-            holidays: [{ id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }],
-            citizens: [{ id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }],
-            mossad: [{ id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }],
-            interpol: [{ id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }]
-        };
-
-        function saveDB() {
-            localStorage.setItem('UkraineRP_DB', JSON.stringify(DB));
-            renderTables();
-        }
-
-        // --- ЭКСПОРТ И ИМПОРТ JSON ---
-        function exportJSON() {
-            const dataStr = JSON.stringify(DB, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "ukraine_rp_database.json";
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedDB = JSON.parse(e.target.result);
-                    // Простая проверка формата файла
-                    if (importedDB.holidays && importedDB.citizens && importedDB.mossad && importedDB.interpol) {
-                        DB = importedDB;
-                        saveDB();
-                        alert("База данных успешно обновлена!");
-                    } else {
-                        alert("Ошибка: Неверный формат JSON файла.");
-                    }
-                } catch (err) {
-                    alert("Ошибка чтения файла. Это не JSON.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; // Сброс инпута
+            window.renderTables();
         }
 
         // --- ВКЛАДКИ ---
@@ -346,7 +344,8 @@
         }
 
         // --- РЕНДЕР ТАБЛИЦ ---
-        function renderTables() {
+        window.renderTables = function() {
+            const db = window.DB;
             const buildRow = (item, type, keys) => {
                 let html = '<tr>';
                 keys.forEach(k => {
@@ -369,10 +368,10 @@
                 return html;
             };
 
-            document.getElementById('holidaysBody').innerHTML = DB.holidays.map(i => buildRow(i, 'holidays', ['name', 'date', 'start', 'end'])).join('');
-            document.getElementById('citizensBody').innerHTML = DB.citizens.map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
-            document.getElementById('mossadBody').innerHTML = DB.mossad.map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
-            document.getElementById('interpolBody').innerHTML = DB.interpol.map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
+            document.getElementById('holidaysBody').innerHTML = (db.holidays || []).map(i => buildRow(i, 'holidays', ['name', 'date', 'start', 'end'])).join('');
+            document.getElementById('citizensBody').innerHTML = (db.citizens || []).map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
+            document.getElementById('mossadBody').innerHTML = (db.mossad || []).map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
+            document.getElementById('interpolBody').innerHTML = (db.interpol || []).map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
         }
 
         // --- ПОИСК ---
@@ -384,7 +383,7 @@
             }
         }
 
-        // --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
+        // --- ДОБАВЛЕНИЕ / УДАЛЕНИЕ ---
         let currentModalType = '';
         const fields = {
             holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата'}, {id:'start', p:'Начало'}, {id:'end', p:'Конец'}],
@@ -412,21 +411,22 @@
                 newItem[f.id] = val !== "" ? val : "-";
             });
 
-            DB[currentModalType].push(newItem);
-            saveDB();
+            if(!window.DB[currentModalType]) window.DB[currentModalType] = [];
+            window.DB[currentModalType].push(newItem);
+            
+            window.saveToFirebase(); // Отправляем в облако
             closeModal();
         }
 
-        function deleteData(type, id) {
-            if (confirm("Внимание: Запись будет безвозвратно удалена. Продолжить?")) {
-                DB[type] = DB[type].filter(item => item.id !== id);
-                saveDB();
+        window.deleteData = function(type, id) {
+            if (confirm("Внимание: Запись будет удалена у всех пользователей сервера. Продолжить?")) {
+                window.DB[type] = window.DB[type].filter(item => item.id !== id);
+                window.saveToFirebase(); // Отправляем в облако
             }
         }
 
         window.onload = () => {
             if (IS_ADMIN) updateAdminUI();
-            else renderTables();
         };
     </script>
 </body>
