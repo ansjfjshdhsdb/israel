@@ -1,0 +1,420 @@
+<?php
+session_start();
+
+// =====================================================================
+// ⚙️ НАСТРОЙКИ СЕРВЕРА И БЕЗОПАСНОСТИ (ВВЕДИ СВОИ ДАННЫЕ)
+// =====================================================================
+$BOT_TOKEN = '8856501826:AAGdS7vOQ7Zt3GXMEsZ-2cx_pLpexXyR-Xw'; // Пример: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
+$BOT_USERNAME = 'israeluabot';    // Пример: 'UkraineRP_Auth_Bot'
+$ADMIN_IDS = [
+    5493487232,
+    1482508992,
+    6025730893,
+    8064092076,
+    5688779177,
+    1431122546,
+    1874762407
+];
+
+// Логика выхода (Logout)
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: ?");
+    exit;
+}
+
+// Криптографическая проверка Telegram авторизации (Защита от подмены)
+function checkTelegramAuthorization($auth_data) {
+    global $BOT_TOKEN;
+    $check_hash = $auth_data['hash'];
+    unset($auth_data['hash']);
+    $data_check_arr = [];
+    foreach ($auth_data as $key => $value) {
+        $data_check_arr[] = $key . '=' . $value;
+    }
+    sort($data_check_arr);
+    $data_check_string = implode("\n", $data_check_arr);
+    $secret_key = hash('sha256', $BOT_TOKEN, true);
+    $hash = hash_hmac('sha256', $data_check_string, $secret_key);
+    
+    if (strcmp($hash, $check_hash) !== 0) {
+        return false; // Хэш не совпал - попытка взлома
+    }
+    if ((time() - $auth_data['auth_date']) > 86400) {
+        return false; // Данные устарели (больше 24 часов)
+    }
+    return $auth_data;
+}
+
+$login_error = '';
+if (isset($_GET['hash'])) {
+    $tg_user = checkTelegramAuthorization($_GET);
+    if ($tg_user) {
+        if (in_array($tg_user['id'], $ADMIN_IDS)) {
+            $_SESSION['is_admin'] = true;
+            $_SESSION['tg_name'] = $tg_user['first_name'];
+            header("Location: ?");
+            exit;
+        } else {
+            $login_error = "Доступ запрещен. Ваш ID ({$tg_user['id']}) не числится в реестре руководства.";
+        }
+    } else {
+        $login_error = "Ошибка криптографии. Попытка обхода системы заблокирована.";
+    }
+}
+
+$is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Еврейская община | Ukraine RP | Портал</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ================= ДИЗАЙН И СТИЛИ ================= */
+        :root {
+            --israel-blue: #0038b8;
+            --gold: #D4AF37;
+            --bg-color: #f0f2f5;
+            --surface: #ffffff;
+            --text-main: #2d3436;
+            --danger: #d63031;
+            --success: #00b894;
+            --mossad-dark: #0f1115;
+            --interpol-dark: #1e272e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background: var(--bg-color); color: var(--text-main); overflow-x: hidden; }
+        h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--israel-blue); border-radius: 4px; }
+
+        /* Навигация */
+        .navbar { position: fixed; top: 0; width: 100%; z-index: 1000; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; padding: 12px 5%; }
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-container img { width: 45px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .logo-container h2 { font-size: 1.2rem; font-weight: 800; color: var(--israel-blue); text-transform: uppercase; }
+        .nav-links button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: #555; transition: 0.3s; border-radius: 6px; }
+        .nav-links button:hover, .nav-links button.active { background: var(--israel-blue); color: white; }
+        
+        /* Секции */
+        .main-content { margin-top: 70px; min-height: calc(100vh - 70px); }
+        .section { display: none; padding-bottom: 50px; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Главная */
+        .hero { height: calc(100vh - 70px); background: linear-gradient(rgba(0,34,119,0.85), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1544989164-32e6a928be85?q=80&w=1920&auto=format&fit=crop') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px; }
+        .hero h1 { font-size: 4rem; text-transform: uppercase; margin-bottom: 10px; text-shadow: 2px 4px 10px rgba(0,0,0,0.8); }
+        .hero p { font-size: 1.5rem; max-width: 800px; margin-bottom: 30px; font-weight: 300; }
+        
+        /* Заголовки */
+        .page-header { padding: 40px 20px; text-align: center; background: var(--surface); border-bottom: 1px solid #ddd; margin-bottom: 30px; }
+        .agency-logo { width: 110px; margin-bottom: 15px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
+        
+        /* Моссад Блок */
+        #mossad .page-header { background: var(--mossad-dark); color: white; border-bottom: 3px solid var(--gold); }
+        .lore-box { max-width: 900px; margin: 20px auto 0; background: rgba(255,255,255,0.05); padding: 25px; border-radius: 8px; border-left: 4px solid var(--gold); text-align: justify; font-size: 0.95rem; line-height: 1.7; color: #dcdde1; }
+        
+        #interpol .page-header { background: var(--interpol-dark); color: white; border-bottom: 3px solid #00a8ff; }
+
+        /* Таблицы */
+        .table-container { max-width: 1200px; margin: 0 auto; background: var(--surface); border-radius: 10px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .table-controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .search-box { padding: 10px 15px; width: 300px; border: 1px solid #ccc; border-radius: 6px; outline: none; transition: 0.3s; }
+        .search-box:focus { border-color: var(--israel-blue); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: var(--israel-blue); text-transform: uppercase; font-size: 0.85rem; }
+        tr:hover td { background: #fdfdfd; }
+        
+        /* Бейджи */
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; }
+        .bg-red { background: rgba(214,48,49,0.1); color: var(--danger); }
+        .bg-gold { background: rgba(212,175,55,0.2); color: #b8860b; }
+        .bg-blue { background: rgba(0,56,184,0.1); color: var(--israel-blue); }
+
+        /* Админка и Кнопки */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-add { background: var(--success); }
+        .btn-add:hover { background: #00997a; }
+        .btn-del { background: var(--danger); padding: 8px 12px; }
+        .admin-box { max-width: 500px; margin: 80px auto; text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--israel-blue); }
+        .error-msg { background: #ffeaa7; color: #d63031; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; }
+        
+        /* Права доступа */
+        .admin-only { display: <?= $is_admin ? 'table-cell' : 'none' ?>; }
+        .admin-inline { display: <?= $is_admin ? 'inline-flex' : 'none' ?>; }
+
+        /* Модалка */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 400px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .modal input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Flag_of_Israel.svg/1024px-Flag_of_Israel.svg.png" alt="Израиль">
+            <h2>Ukraine RP</h2>
+        </div>
+        <div class="nav-links">
+            <button class="active" onclick="showTab('home')"><i class="fa-solid fa-house"></i> Главная</button>
+            <button onclick="showTab('holidays')"><i class="fa-solid fa-calendar"></i> Праздники</button>
+            <button onclick="showTab('citizens')"><i class="fa-solid fa-users"></i> Граждане</button>
+            <button onclick="showTab('mossad')"><i class="fa-solid fa-user-secret"></i> Моссад</button>
+            <button onclick="showTab('interpol')"><i class="fa-solid fa-globe"></i> Интерпол</button>
+            <button onclick="showTab('admin')" style="border: 2px solid var(--israel-blue); color: var(--israel-blue);"><i class="fa-solid fa-shield-halved"></i> Доступ</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <!-- Главная -->
+        <div id="home" class="section active">
+            <div class="hero">
+                <h1>Шалом!</h1>
+                <p>Официальный портал еврейской общины <strong style="color: var(--gold);">Ukraine RP</strong>.</p>
+                <h2>Ам Исраэль хай!</h2>
+            </div>
+        </div>
+
+        <!-- Праздники -->
+        <div id="holidays" class="section">
+            <div class="page-header"><h2>График праздников</h2></div>
+            <div class="table-container">
+                <div class="table-controls">
+                    <input type="text" class="search-box" placeholder="Поиск праздника..." onkeyup="searchTable(this, 'holidaysBody')">
+                    <button class="btn btn-add admin-inline" onclick="openModal('holidays')"><i class="fa-solid fa-plus"></i> Добавить</button>
+                </div>
+                <table>
+                    <thead><tr><th>Название</th><th>Дата</th><th>Начало</th><th>Конец</th><th class="admin-only">Управление</th></tr></thead>
+                    <tbody id="holidaysBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Граждане -->
+        <div id="citizens" class="section">
+            <div class="page-header"><h2>Реестр Граждан</h2></div>
+            <div class="table-container">
+                <div class="table-controls">
+                    <input type="text" class="search-box" placeholder="Поиск гражданина..." onkeyup="searchTable(this, 'citizensBody')">
+                    <button class="btn btn-add admin-inline" onclick="openModal('citizens')"><i class="fa-solid fa-user-plus"></i> Регистрация</button>
+                </div>
+                <table>
+                    <thead><tr><th>Имя Фамилия</th><th>TG/DS</th><th>Возраст</th><th>Статус</th><th>Место</th><th>Родом из</th><th class="admin-only">Управление</th></tr></thead>
+                    <tbody id="citizensBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Моссад -->
+        <div id="mossad" class="section">
+            <div class="page-header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Seal_of_the_Mossad.svg/800px-Seal_of_the_Mossad.svg.png" class="agency-logo" alt="Моссад">
+                <h2 style="color:var(--gold); font-size: 2.2rem;">המנכ"ל | МОССАД</h2>
+                
+                <div class="lore-box">
+                    <p><strong>«Моссад»</strong> — это внешняя спецслужба Израиля, занимающаяся разведкой, контртеррористическими и тайными операциями. В переводе с иврита — <em>«ха-Мосад ле-Модиин у-ле-Тафкидим Меюхадим»</em> — означает «Ведомство разведки и специальных операций».</p>
+                    <br>
+                    <p>Служба внешней разведки Израиля неподконтрольна кнессету (парламенту) и напрямую подчиняется премьер-министру. Она имеет гражданскую структуру и не подчиняется ни одному из родов войск, однако требует от кандидатов опыта военной службы. Наряду с АМАН (Управление военной разведки) и ШАБАК (Служба внутренней безопасности) является одной из трех основных спецслужб еврейского государства. В ее задачи входят сбор разведывательных данных и физическое уничтожение врагов Израиля.</p>
+                </div>
+            </div>
+            
+            <div class="table-container" style="background: var(--mossad-dark); color: white; border: 1px solid #333;">
+                <div class="table-controls">
+                    <input type="text" class="search-box" placeholder="Поиск в базе Моссад..." onkeyup="searchTable(this, 'mossadBody')" style="background:#222; color:white; border-color: #444;">
+                    <button class="btn admin-inline" style="background:var(--gold); color:black;" onclick="openModal('mossad')"><i class="fa-solid fa-user-ninja"></i> Внести агента</button>
+                </div>
+                <table style="color: white;">
+                    <thead><tr style="border-bottom: 2px solid var(--gold);"><th style="color:var(--gold);">Оперативник</th><th style="color:var(--gold);">Username</th><th style="color:var(--gold);">Должность</th><th style="color:var(--gold);">Происхождение</th><th class="admin-only" style="color:var(--gold);">Управление</th></tr></thead>
+                    <tbody id="mossadBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Интерпол -->
+        <div id="interpol" class="section">
+            <div class="page-header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Interpol_Logo.svg/500px-Interpol_Logo.svg.png" class="agency-logo" alt="Интерпол">
+                <h2>INTERPOL</h2>
+                <p>Международная база уголовного розыска и координации</p>
+            </div>
+            <div class="table-container">
+                <div class="table-controls">
+                    <input type="text" class="search-box" placeholder="Поиск досье..." onkeyup="searchTable(this, 'interpolBody')">
+                    <button class="btn btn-add admin-inline" style="background:#00a8ff;" onclick="openModal('interpol')"><i class="fa-solid fa-handcuffs"></i> Оформить ордер</button>
+                </div>
+                <table>
+                    <thead><tr><th>Username</th><th>Должность / Статус</th><th>Причина (Статья)</th><th class="admin-only">Управление</th></tr></thead>
+                    <tbody id="interpolBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Админка -->
+        <div id="admin" class="section">
+            <div class="admin-box">
+                <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--israel-blue); margin-bottom: 20px;"></i>
+                <h2 style="margin-bottom: 15px;">Терминал Доступа</h2>
+                
+                <?php if ($login_error): ?>
+                    <div class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> <?= $login_error ?></div>
+                <?php endif; ?>
+
+                <?php if ($is_admin): ?>
+                    <h3 style="color: var(--success); margin: 20px 0;"><i class="fa-solid fa-check-double"></i> Доступ разрешен</h3>
+                    <p style="font-size: 1.1rem;">Агент: <strong><?= htmlspecialchars($_SESSION['tg_name']) ?></strong></p>
+                    <p style="margin: 20px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Вы можете редактировать базы данных. Данные кэшируются локально.</p>
+                    <a href="?logout=1" class="btn btn-del" style="text-decoration:none; width: 100%; justify-content: center; padding: 12px;"><i class="fa-solid fa-right-from-bracket"></i> Завершить сеанс связи</a>
+                <?php else: ?>
+                    <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Авторизация производится строго через официального крипто-бота Telegram. Сервер автоматически сверяет вашу цифровую подпись.</p>
+                    <!-- TELEGRAM WIDGET -->
+                    <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                            data-telegram-login="<?= $BOT_USERNAME ?>" 
+                            data-size="large" 
+                            data-auth-url="?" 
+                            data-request-access="write"></script>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления записей -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="margin-bottom: 20px; color: var(--israel-blue);">Добавить запись</h3>
+            <div id="modalInputs"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                <button class="btn" style="background:#e1e8ed; color:#333;" onclick="closeModal()">Отмена</button>
+                <button class="btn btn-add" onclick="saveData()">Сохранить в базу</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= JAVASCRIPT ЛОГИКА =================
+        const IS_ADMIN = <?= $is_admin ? 'true' : 'false' ?>;
+        
+        // --- БАЗА ДАННЫХ ---
+        // Храним в localStorage, чтобы после обновления страницы таблица не обнулялась
+        let DB = JSON.parse(localStorage.getItem('UkraineRP_DB')) || {
+            holidays: [
+                { id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }
+            ],
+            citizens: [
+                { id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }
+            ],
+            mossad: [
+                { id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }
+            ],
+            interpol: [
+                { id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }
+            ]
+        };
+
+        function saveDB() {
+            localStorage.setItem('UkraineRP_DB', JSON.stringify(DB));
+            renderTables();
+        }
+
+        // --- ВКЛАДКИ ---
+        function showTab(id) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // --- РЕНДЕР ТАБЛИЦ ---
+        function renderTables() {
+            const buildRow = (item, type, keys) => {
+                let html = '<tr>';
+                keys.forEach(k => {
+                    let val = item[k];
+                    // Стилизация определенных слов
+                    if (typeof val === 'string') {
+                        if (val.toLowerCase().includes('розыск')) val = `<span class="badge bg-red">${val}</span>`;
+                        else if (val === 'Ортодокс') val = `<span class="badge bg-gold">${val}</span>`;
+                        else if (k === 'rel' || k === 'pos') val = `<span class="badge bg-blue">${val}</span>`;
+                        if (val === 'СЕКРЕТНО') val = `<strong><i class="fa-solid fa-eye-slash"></i> ${val}</strong>`;
+                    }
+                    html += `<td>${val}</td>`;
+                });
+                
+                if (IS_ADMIN) {
+                    html += `<td class="admin-only"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+                }
+                html += '</tr>';
+                return html;
+            };
+
+            document.getElementById('holidaysBody').innerHTML = DB.holidays.map(i => buildRow(i, 'holidays', ['name', 'date', 'start', 'end'])).join('');
+            document.getElementById('citizensBody').innerHTML = DB.citizens.map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
+            document.getElementById('mossadBody').innerHTML = DB.mossad.map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
+            document.getElementById('interpolBody').innerHTML = DB.interpol.map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
+        }
+
+        // --- ПОИСК ---
+        function searchTable(input, bodyId) {
+            const filter = input.value.toLowerCase();
+            const rows = document.getElementById(bodyId).getElementsByTagName('tr');
+            for (let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+            }
+        }
+
+        // --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
+        let currentModalType = '';
+        const fields = {
+            holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата проведения'}, {id:'start', p:'Время начала'}, {id:'end', p:'Время конца'}],
+            citizens: [{id:'name', p:'Имя Фамилия'}, {id:'user', p:'TG / Discord'}, {id:'age', p:'Возраст', type:'number'}, {id:'rel', p:'Религиозный статус'}, {id:'loc', p:'Место проживания'}, {id:'orig', p:'Откуда родом'}],
+            mossad: [{id:'name', p:'Имя (Обычно: СЕКРЕТНО)'}, {id:'user', p:'Позывной / TG'}, {id:'pos', p:'Должность'}, {id:'orig', p:'Происхождение'}],
+            interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус (В розыске / Агент)'}, {id:'reason', p:'Причина / Статья'}]
+        };
+
+        function openModal(type) {
+            currentModalType = type;
+            let html = '';
+            fields[type].forEach(f => {
+                html += `<input type="${f.type || 'text'}" id="mod_${f.id}" placeholder="${f.p}" autocomplete="off">`;
+            });
+            document.getElementById('modalInputs').innerHTML = html;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() { 
+            document.getElementById('modal').classList.remove('active'); 
+        }
+
+        function saveData() {
+            let newItem = { id: Date.now() };
+            fields[currentModalType].forEach(f => {
+                let val = document.getElementById(`mod_${f.id}`).value.trim();
+                newItem[f.id] = val !== "" ? val : "-";
+            });
+
+            DB[currentModalType].push(newItem);
+            saveDB();
+            closeModal();
+        }
+
+        function deleteData(type, id) {
+            if (confirm("Внимание: Запись будет безвозвратно удалена из реестра. Продолжить?")) {
+                DB[type] = DB[type].filter(item => item.id !== id);
+                saveDB();
+            }
+        }
+
+        // Инициализация при загрузке
+        window.onload = renderTables;
+    </script>
+</body>
+</html>
