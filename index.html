@@ -1,70 +1,3 @@
-<?php
-session_start();
-
-// =====================================================================
-// ⚙️ НАСТРОЙКИ СЕРВЕРА И БЕЗОПАСНОСТИ (ВВЕДИ СВОИ ДАННЫЕ)
-// =====================================================================
-$BOT_TOKEN = '8856501826:AAGdS7vOQ7Zt3GXMEsZ-2cx_pLpexXyR-Xw'; // Пример: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
-$BOT_USERNAME = 'israeluabot';    // Пример: 'UkraineRP_Auth_Bot'
-$ADMIN_IDS = [
-    5493487232,
-    1482508992,
-    6025730893,
-    8064092076,
-    5688779177,
-    1431122546,
-    1874762407
-];
-
-// Логика выхода (Logout)
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: ?");
-    exit;
-}
-
-// Криптографическая проверка Telegram авторизации (Защита от подмены)
-function checkTelegramAuthorization($auth_data) {
-    global $BOT_TOKEN;
-    $check_hash = $auth_data['hash'];
-    unset($auth_data['hash']);
-    $data_check_arr = [];
-    foreach ($auth_data as $key => $value) {
-        $data_check_arr[] = $key . '=' . $value;
-    }
-    sort($data_check_arr);
-    $data_check_string = implode("\n", $data_check_arr);
-    $secret_key = hash('sha256', $BOT_TOKEN, true);
-    $hash = hash_hmac('sha256', $data_check_string, $secret_key);
-    
-    if (strcmp($hash, $check_hash) !== 0) {
-        return false; // Хэш не совпал - попытка взлома
-    }
-    if ((time() - $auth_data['auth_date']) > 86400) {
-        return false; // Данные устарели (больше 24 часов)
-    }
-    return $auth_data;
-}
-
-$login_error = '';
-if (isset($_GET['hash'])) {
-    $tg_user = checkTelegramAuthorization($_GET);
-    if ($tg_user) {
-        if (in_array($tg_user['id'], $ADMIN_IDS)) {
-            $_SESSION['is_admin'] = true;
-            $_SESSION['tg_name'] = $tg_user['first_name'];
-            header("Location: ?");
-            exit;
-        } else {
-            $login_error = "Доступ запрещен. Ваш ID ({$tg_user['id']}) не числится в реестре руководства.";
-        }
-    } else {
-        $login_error = "Ошибка криптографии. Попытка обхода системы заблокирована.";
-    }
-}
-
-$is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
-?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -144,11 +77,11 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         .btn-add:hover { background: #00997a; }
         .btn-del { background: var(--danger); padding: 8px 12px; }
         .admin-box { max-width: 500px; margin: 80px auto; text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--israel-blue); }
-        .error-msg { background: #ffeaa7; color: #d63031; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; }
+        .error-msg { display: none; background: #ffeaa7; color: #d63031; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; }
         
         /* Права доступа */
-        .admin-only { display: <?= $is_admin ? 'table-cell' : 'none' ?>; }
-        .admin-inline { display: <?= $is_admin ? 'inline-flex' : 'none' ?>; }
+        .admin-only { display: none; }
+        .admin-inline { display: none; }
 
         /* Модалка */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: center; z-index: 2000; }
@@ -260,28 +193,28 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 
         <!-- Админка -->
         <div id="admin" class="section">
-            <div class="admin-box">
+            <div class="admin-box" id="loginBox">
                 <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--israel-blue); margin-bottom: 20px;"></i>
                 <h2 style="margin-bottom: 15px;">Терминал Доступа</h2>
                 
-                <?php if ($login_error): ?>
-                    <div class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> <?= $login_error ?></div>
-                <?php endif; ?>
+                <div id="errorBox" class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> <span id="errorText"></span></div>
 
-                <?php if ($is_admin): ?>
-                    <h3 style="color: var(--success); margin: 20px 0;"><i class="fa-solid fa-check-double"></i> Доступ разрешен</h3>
-                    <p style="font-size: 1.1rem;">Агент: <strong><?= htmlspecialchars($_SESSION['tg_name']) ?></strong></p>
-                    <p style="margin: 20px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Вы можете редактировать базы данных. Данные кэшируются локально.</p>
-                    <a href="?logout=1" class="btn btn-del" style="text-decoration:none; width: 100%; justify-content: center; padding: 12px;"><i class="fa-solid fa-right-from-bracket"></i> Завершить сеанс связи</a>
-                <?php else: ?>
-                    <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Авторизация производится строго через официального крипто-бота Telegram. Сервер автоматически сверяет вашу цифровую подпись.</p>
-                    <!-- TELEGRAM WIDGET -->
-                    <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                            data-telegram-login="<?= $BOT_USERNAME ?>" 
-                            data-size="large" 
-                            data-auth-url="?" 
-                            data-request-access="write"></script>
-                <?php endif; ?>
+                <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Авторизация производится строго через официального бота Telegram. Сервер автоматически сверяет ваш ID.</p>
+                
+                <!-- TELEGRAM WIDGET (Настроен на работу через JavaScript) -->
+                <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                        data-telegram-login="israeluabot" 
+                        data-size="large" 
+                        data-onauth="onTelegramAuth(user)" 
+                        data-request-access="write"></script>
+            </div>
+
+            <div class="admin-box" id="dashboardBox" style="display: none;">
+                <i class="fa-solid fa-check-double" style="font-size: 3.5rem; color: var(--success); margin-bottom: 20px;"></i>
+                <h3 style="color: var(--success); margin: 20px 0;">Доступ разрешен</h3>
+                <p style="font-size: 1.1rem;">Агент: <strong id="adminName"></strong></p>
+                <p style="margin: 20px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Вы можете редактировать базы данных. Данные кэшируются локально в браузере.</p>
+                <button class="btn btn-del" onclick="logout()" style="width: 100%; justify-content: center; padding: 12px;"><i class="fa-solid fa-right-from-bracket"></i> Завершить сеанс связи</button>
             </div>
         </div>
     </div>
@@ -300,23 +233,55 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 
     <script>
         // ================= JAVASCRIPT ЛОГИКА =================
-        const IS_ADMIN = <?= $is_admin ? 'true' : 'false' ?>;
+        let IS_ADMIN = false;
         
+        // Список ID админов из твоего PHP кода
+        const ADMIN_IDS = [
+            5493487232,
+            1482508992,
+            6025730893,
+            8064092076,
+            5688779177,
+            1431122546,
+            1874762407
+        ];
+
+        // Функция обработки авторизации от виджета Telegram
+        function onTelegramAuth(user) {
+            if (ADMIN_IDS.includes(user.id)) {
+                IS_ADMIN = true;
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('dashboardBox').style.display = 'block';
+                document.getElementById('adminName').innerText = user.first_name;
+                
+                // Показываем кнопки управления
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+                document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'inline-flex');
+                renderTables();
+            } else {
+                document.getElementById('errorBox').style.display = 'block';
+                document.getElementById('errorText').innerText = `Доступ запрещен. Ваш ID (${user.id}) не числится в реестре руководства.`;
+            }
+        }
+
+        function logout() {
+            IS_ADMIN = false;
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('dashboardBox').style.display = 'none';
+            document.getElementById('errorBox').style.display = 'none';
+            
+            // Прячем кнопки управления
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'none');
+            renderTables();
+        }
+
         // --- БАЗА ДАННЫХ ---
-        // Храним в localStorage, чтобы после обновления страницы таблица не обнулялась
         let DB = JSON.parse(localStorage.getItem('UkraineRP_DB')) || {
-            holidays: [
-                { id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }
-            ],
-            citizens: [
-                { id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }
-            ],
-            mossad: [
-                { id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }
-            ],
-            interpol: [
-                { id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }
-            ]
+            holidays: [{ id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }],
+            citizens: [{ id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }],
+            mossad: [{ id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }],
+            interpol: [{ id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }]
         };
 
         function saveDB() {
@@ -339,7 +304,6 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
                 let html = '<tr>';
                 keys.forEach(k => {
                     let val = item[k];
-                    // Стилизация определенных слов
                     if (typeof val === 'string') {
                         if (val.toLowerCase().includes('розыск')) val = `<span class="badge bg-red">${val}</span>`;
                         else if (val === 'Ортодокс') val = `<span class="badge bg-gold">${val}</span>`;
@@ -350,7 +314,9 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
                 });
                 
                 if (IS_ADMIN) {
-                    html += `<td class="admin-only"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+                    html += `<td class="admin-only" style="display: table-cell;"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+                } else {
+                    html += `<td class="admin-only" style="display: none;"></td>`;
                 }
                 html += '</tr>';
                 return html;
@@ -390,9 +356,7 @@ $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             document.getElementById('modal').classList.add('active');
         }
 
-        function closeModal() { 
-            document.getElementById('modal').classList.remove('active'); 
-        }
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
         function saveData() {
             let newItem = { id: Date.now() };
