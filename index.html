@@ -202,11 +202,14 @@
                 <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Авторизация производится строго через официального бота Telegram. Сервер автоматически сверяет ваш ID.</p>
                 
                 <!-- TELEGRAM WIDGET (Настроен на работу через JavaScript) -->
-                <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                <div id="tg-widget-container">
+                    <script async src="https://telegram.org/js/telegram-widget.js?22" 
                         data-telegram-login="israeluabot" 
                         data-size="large" 
                         data-onauth="onTelegramAuth(user)" 
-                        data-request-access="write"></script>
+                        data-request-access="write">
+                    </script>
+                </div>
             </div>
 
             <div class="admin-box" id="dashboardBox" style="display: none;">
@@ -232,153 +235,172 @@
     </div>
 
     <script>
-        // ================= JAVASCRIPT ЛОГИКА =================
-        let IS_ADMIN = false;
+       // ================= JAVASCRIPT ЛОГИКА =================
+// Твой список админов
+const ADMIN_IDS = [
+    5493487232, 1482508992, 6025730893, 8064092076, 5688779177, 1431122546, 1874762407
+];
+
+let IS_ADMIN = localStorage.getItem('rp_admin_logged') === 'true';
+
+// ГЛОБАЛЬНАЯ функция для виджета Telegram
+window.onTelegramAuth = function(user) {
+    // Принудительно переводим ID в число для точного сравнения
+    if (ADMIN_IDS.includes(Number(user.id))) {
+        // Сохраняем сессию в браузере
+        localStorage.setItem('rp_admin_logged', 'true');
+        localStorage.setItem('rp_admin_name', user.first_name);
         
-        // Список ID админов из твоего PHP кода
-        const ADMIN_IDS = [
-            5493487232,
-            1482508992,
-            6025730893,
-            8064092076,
-            5688779177,
-            1431122546,
-            1874762407
-        ];
+        updateAdminUI(user.first_name);
+    } else {
+        document.getElementById('errorBox').style.display = 'block';
+        document.getElementById('errorText').innerText = `Доступ запрещен. Ваш ID (${user.id}) не найден в базе.`;
+    }
+};
 
-        // Функция обработки авторизации от виджета Telegram
-        function onTelegramAuth(user) {
-            if (ADMIN_IDS.includes(user.id)) {
-                IS_ADMIN = true;
-                document.getElementById('loginBox').style.display = 'none';
-                document.getElementById('dashboardBox').style.display = 'block';
-                document.getElementById('adminName').innerText = user.first_name;
-                
-                // Показываем кнопки управления
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
-                document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'inline-flex');
-                renderTables();
-            } else {
-                document.getElementById('errorBox').style.display = 'block';
-                document.getElementById('errorText').innerText = `Доступ запрещен. Ваш ID (${user.id}) не числится в реестре руководства.`;
+function updateAdminUI(name) {
+    IS_ADMIN = true;
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('dashboardBox').style.display = 'block';
+    
+    // Обновляем имя, если оно передано, иначе берем из памяти
+    if (name) {
+        document.getElementById('adminName').innerText = name;
+    } else {
+        document.getElementById('adminName').innerText = localStorage.getItem('rp_admin_name') || 'Агент';
+    }
+    
+    // Показываем кнопки управления
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+    document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'inline-flex');
+    renderTables();
+}
+
+function logout() {
+    IS_ADMIN = false;
+    localStorage.removeItem('rp_admin_logged');
+    localStorage.removeItem('rp_admin_name');
+    
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('dashboardBox').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    
+    // Прячем кнопки управления
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'none');
+    renderTables();
+}
+
+// --- БАЗА ДАННЫХ ---
+let DB = JSON.parse(localStorage.getItem('UkraineRP_DB')) || {
+    holidays: [{ id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }],
+    citizens: [{ id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }],
+    mossad: [{ id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }],
+    interpol: [{ id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }]
+};
+
+function saveDB() {
+    localStorage.setItem('UkraineRP_DB', JSON.stringify(DB));
+    renderTables();
+}
+
+// --- ВКЛАДКИ ---
+function showTab(id) {
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-links button').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo(0,0);
+}
+
+// --- РЕНДЕР ТАБЛИЦ ---
+function renderTables() {
+    const buildRow = (item, type, keys) => {
+        let html = '<tr>';
+        keys.forEach(k => {
+            let val = item[k];
+            if (typeof val === 'string') {
+                if (val.toLowerCase().includes('розыск')) val = `<span class="badge bg-red">${val}</span>`;
+                else if (val === 'Ортодокс') val = `<span class="badge bg-gold">${val}</span>`;
+                else if (k === 'rel' || k === 'pos') val = `<span class="badge bg-blue">${val}</span>`;
+                if (val === 'СЕКРЕТНО') val = `<strong><i class="fa-solid fa-eye-slash"></i> ${val}</strong>`;
             }
+            html += `<td>${val}</td>`;
+        });
+        
+        if (IS_ADMIN) {
+            html += `<td class="admin-only" style="display: table-cell;"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+        } else {
+            html += `<td class="admin-only" style="display: none;"></td>`;
         }
+        html += '</tr>';
+        return html;
+    };
 
-        function logout() {
-            IS_ADMIN = false;
-            document.getElementById('loginBox').style.display = 'block';
-            document.getElementById('dashboardBox').style.display = 'none';
-            document.getElementById('errorBox').style.display = 'none';
-            
-            // Прячем кнопки управления
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.admin-inline').forEach(el => el.style.display = 'none');
-            renderTables();
-        }
+    document.getElementById('holidaysBody').innerHTML = DB.holidays.map(i => buildRow(i, 'holidays', ['name', 'date', 'start', 'end'])).join('');
+    document.getElementById('citizensBody').innerHTML = DB.citizens.map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
+    document.getElementById('mossadBody').innerHTML = DB.mossad.map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
+    document.getElementById('interpolBody').innerHTML = DB.interpol.map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
+}
 
-        // --- БАЗА ДАННЫХ ---
-        let DB = JSON.parse(localStorage.getItem('UkraineRP_DB')) || {
-            holidays: [{ id: 1, name: "Шаббат", date: "Еженедельно", start: "18:00 (Пт)", end: "19:00 (Сб)" }],
-            citizens: [{ id: 1, name: "Аарон Коэн", user: "@aaron", age: 34, rel: "Ортодокс", loc: "Одесса", orig: "Хайфа" }],
-            mossad: [{ id: 1, name: "СЕКРЕТНО", user: "@agent_x", pos: "Директор", orig: "Иерусалим" }],
-            interpol: [{ id: 1, user: "@bad_rp", pos: "В розыске", reason: "Нарушение правил сервера" }]
-        };
+// --- ПОИСК ---
+function searchTable(input, bodyId) {
+    const filter = input.value.toLowerCase();
+    const rows = document.getElementById(bodyId).getElementsByTagName('tr');
+    for (let row of rows) {
+        row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+    }
+}
 
-        function saveDB() {
-            localStorage.setItem('UkraineRP_DB', JSON.stringify(DB));
-            renderTables();
-        }
+// --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
+let currentModalType = '';
+const fields = {
+    holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата'}, {id:'start', p:'Начало'}, {id:'end', p:'Конец'}],
+    citizens: [{id:'name', p:'Имя Фамилия'}, {id:'user', p:'TG / Discord'}, {id:'age', p:'Возраст', type:'number'}, {id:'rel', p:'Религиозный статус'}, {id:'loc', p:'Место'}, {id:'orig', p:'Откуда'}],
+    mossad: [{id:'name', p:'Имя (Обычно: СЕКРЕТНО)'}, {id:'user', p:'Позывной / TG'}, {id:'pos', p:'Должность'}, {id:'orig', p:'Происхождение'}],
+    interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус'}, {id:'reason', p:'Причина / Статья'}]
+};
 
-        // --- ВКЛАДКИ ---
-        function showTab(id) {
-            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-links button').forEach(el => el.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
-            window.scrollTo(0,0);
-        }
+function openModal(type) {
+    currentModalType = type;
+    let html = '';
+    fields[type].forEach(f => {
+        html += `<input type="${f.type || 'text'}" id="mod_${f.id}" placeholder="${f.p}" autocomplete="off">`;
+    });
+    document.getElementById('modalInputs').innerHTML = html;
+    document.getElementById('modal').classList.add('active');
+}
 
-        // --- РЕНДЕР ТАБЛИЦ ---
-        function renderTables() {
-            const buildRow = (item, type, keys) => {
-                let html = '<tr>';
-                keys.forEach(k => {
-                    let val = item[k];
-                    if (typeof val === 'string') {
-                        if (val.toLowerCase().includes('розыск')) val = `<span class="badge bg-red">${val}</span>`;
-                        else if (val === 'Ортодокс') val = `<span class="badge bg-gold">${val}</span>`;
-                        else if (k === 'rel' || k === 'pos') val = `<span class="badge bg-blue">${val}</span>`;
-                        if (val === 'СЕКРЕТНО') val = `<strong><i class="fa-solid fa-eye-slash"></i> ${val}</strong>`;
-                    }
-                    html += `<td>${val}</td>`;
-                });
-                
-                if (IS_ADMIN) {
-                    html += `<td class="admin-only" style="display: table-cell;"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
-                } else {
-                    html += `<td class="admin-only" style="display: none;"></td>`;
-                }
-                html += '</tr>';
-                return html;
-            };
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-            document.getElementById('holidaysBody').innerHTML = DB.holidays.map(i => buildRow(i, 'holidays', ['name', 'date', 'start', 'end'])).join('');
-            document.getElementById('citizensBody').innerHTML = DB.citizens.map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
-            document.getElementById('mossadBody').innerHTML = DB.mossad.map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
-            document.getElementById('interpolBody').innerHTML = DB.interpol.map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
-        }
+function saveData() {
+    let newItem = { id: Date.now() };
+    fields[currentModalType].forEach(f => {
+        let val = document.getElementById(`mod_${f.id}`).value.trim();
+        newItem[f.id] = val !== "" ? val : "-";
+    });
 
-        // --- ПОИСК ---
-        function searchTable(input, bodyId) {
-            const filter = input.value.toLowerCase();
-            const rows = document.getElementById(bodyId).getElementsByTagName('tr');
-            for (let row of rows) {
-                row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
-            }
-        }
+    DB[currentModalType].push(newItem);
+    saveDB();
+    closeModal();
+}
 
-        // --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
-        let currentModalType = '';
-        const fields = {
-            holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата проведения'}, {id:'start', p:'Время начала'}, {id:'end', p:'Время конца'}],
-            citizens: [{id:'name', p:'Имя Фамилия'}, {id:'user', p:'TG / Discord'}, {id:'age', p:'Возраст', type:'number'}, {id:'rel', p:'Религиозный статус'}, {id:'loc', p:'Место проживания'}, {id:'orig', p:'Откуда родом'}],
-            mossad: [{id:'name', p:'Имя (Обычно: СЕКРЕТНО)'}, {id:'user', p:'Позывной / TG'}, {id:'pos', p:'Должность'}, {id:'orig', p:'Происхождение'}],
-            interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус (В розыске / Агент)'}, {id:'reason', p:'Причина / Статья'}]
-        };
+function deleteData(type, id) {
+    if (confirm("Внимание: Запись будет безвозвратно удалена. Продолжить?")) {
+        DB[type] = DB[type].filter(item => item.id !== id);
+        saveDB();
+    }
+}
 
-        function openModal(type) {
-            currentModalType = type;
-            let html = '';
-            fields[type].forEach(f => {
-                html += `<input type="${f.type || 'text'}" id="mod_${f.id}" placeholder="${f.p}" autocomplete="off">`;
-            });
-            document.getElementById('modalInputs').innerHTML = html;
-            document.getElementById('modal').classList.add('active');
-        }
-
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
-
-        function saveData() {
-            let newItem = { id: Date.now() };
-            fields[currentModalType].forEach(f => {
-                let val = document.getElementById(`mod_${f.id}`).value.trim();
-                newItem[f.id] = val !== "" ? val : "-";
-            });
-
-            DB[currentModalType].push(newItem);
-            saveDB();
-            closeModal();
-        }
-
-        function deleteData(type, id) {
-            if (confirm("Внимание: Запись будет безвозвратно удалена из реестра. Продолжить?")) {
-                DB[type] = DB[type].filter(item => item.id !== id);
-                saveDB();
-            }
-        }
-
-        // Инициализация при загрузке
-        window.onload = renderTables;
+// Инициализация при загрузке
+window.onload = () => {
+    // Проверяем, авторизован ли админ с прошлого раза
+    if (IS_ADMIN) {
+        updateAdminUI();
+    } else {
+        renderTables();
+    }
+};
     </script>
 </body>
 </html>
