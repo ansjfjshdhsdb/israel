@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Скрипт Telegram Web App (для чтения initData) -->
+    <!-- Скрипт Telegram Web App (для чтения initData внутри ТГ) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
@@ -155,7 +155,9 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Seal_of_the_Mossad.svg/800px-Seal_of_the_Mossad.svg.png" class="agency-logo" alt="Моссад">
                 <h2 style="color:var(--gold); font-size: 2.2rem;">המנכ"ל | МОССАД</h2>
                 <div class="lore-box">
-                    <p><strong>«Моссад»</strong> — это внешняя спецслужба Израиля, занимающаяся разведкой, контртеррористическими и тайными операциями. В переводе с иврита — «ха-Мосад ле-Модиин у-ле-Тафкидим Меюхадим» — означает «Ведомство разведки и специальных операций». Служба внешней разведки Израиля неподконтрольна фракциям таким как ДБР СБС и напрямую подчиняется еврейскому народу. Она имеет гражданскую структуру и не подчиняется ни одному из родов войск, однако требует от кандидатов опыта военной службы. В ее задачи входят сбор разведывательных данных и физическое уничтожение врагов Израиля.</p>
+                    <p><strong>«Моссад»</strong> — это внешняя спецслужба Израиля, занимающаяся разведкой, контртеррористическими и тайными операциями. В переводе с иврита — <em>«ха-Мосад ле-Модиин у-ле-Тафкидим Меюхадим»</em> — означает «Ведомство разведки и специальных операций».</p>
+                    <br>
+                    <p>Служба внешней разведки Израиля неподконтрольна фракциям таким как ДБР, СБС и напрямую подчиняется еврейскому народу. Она имеет гражданскую структуру и не подчиняется ни одному из родов войск, однако требует от кандидатов опыта военной службы. В ее задачи входят сбор разведывательных данных и физическое уничтожение врагов Израиля.</p>
                 </div>
             </div>
             <div class="table-container" style="background: var(--mossad-dark); color: white; border: 1px solid #333;">
@@ -197,9 +199,9 @@
                 
                 <div id="errorBox" class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> <span id="errorText"></span></div>
 
-                <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">Синхронизация через Firebase включена. Откройте этот сайт через <strong>Telegram Web App</strong> (внутри бота), чтобы система автоматически считала ваш ID (initData).</p>
+                <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">База данных работает в реальном времени. Авторизация доступна только руководящему составу.</p>
                 
-                <!-- Виджет оставлен как резервный вариант для входа с ПК -->
+                <!-- Виджет ТГ (резервный вариант для входа с браузера ПК) -->
                 <div id="tg-widget-container">
                     <script async src="https://telegram.org/js/telegram-widget.js?22" 
                             data-telegram-login="israeluabot" 
@@ -213,7 +215,7 @@
                 <i class="fa-solid fa-check-double" style="font-size: 3.5rem; color: var(--success); margin-bottom: 20px;"></i>
                 <h3 style="color: var(--success); margin: 10px 0;">Доступ разрешен</h3>
                 <p style="font-size: 1.1rem;">Агент: <strong id="adminName"></strong></p>
-                <p style="margin: 15px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Изменения моментально синхронизируются у всех игроков через облако Firebase.</p>
+                <p style="margin: 15px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">Служебный интерфейс активирован. Все изменения моментально сохраняются в облако Firebase и видны всем игрокам сервера.</p>
                 <button class="btn btn-del" onclick="logout()" style="width: 100%; justify-content: center; padding: 12px; margin-bottom: 20px;"><i class="fa-solid fa-right-from-bracket"></i> Завершить сеанс связи</button>
             </div>
         </div>
@@ -236,24 +238,21 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // =========================================================
-        // ⚙️ ВСТАВЬ СВОЙ КОНФИГ FIREBASE СЮДА
-        // =========================================================
+        // Твой конфиг (добавлена ссылка databaseURL для Realtime DB)
         const firebaseConfig = {
-          apiKey: "AIzaSyBYxeqPS_U_BDa91-jlXDPMIR0kBVvb9Ho",
-          authDomain: "wqeqws.firebaseapp.com",
-          projectId: "wqeqws",
-          storageBucket: "wqeqws.firebasestorage.app",
-          messagingSenderId: "155361925374",
-          appId: "1:155361925374:web:a1babe2816ea40e95dedaf"
+            apiKey: "AIzaSyBYxeqPS_U_BDa91-jlXDPMIR0kBVvb9Ho",
+            authDomain: "wqeqws.firebaseapp.com",
+            databaseURL: "https://wqeqws-default-rtdb.firebaseio.com", 
+            projectId: "wqeqws",
+            storageBucket: "wqeqws.firebasestorage.app",
+            messagingSenderId: "155361925374",
+            appId: "1:155361925374:web:aa8112dcde144f775dedaf"
         };
-        // =========================================================
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const dbRef = ref(db, 'ukraine_rp_database');
 
-        // Глобальная база
         window.DB = { holidays: [], citizens: [], mossad: [], interpol: [] };
 
         // Слушаем изменения из Firebase в реальном времени
@@ -274,6 +273,7 @@
         window.saveToFirebase = function() {
             set(dbRef, window.DB).catch((error) => {
                 alert("Ошибка синхронизации с базой: " + error.message);
+                console.error(error);
             });
         }
     </script>
@@ -287,17 +287,21 @@
         let IS_ADMIN = localStorage.getItem('rp_admin_logged') === 'true';
 
         // Проверка через Telegram Web App (initData)
-        const tg = window.Telegram.WebApp;
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const userId = tg.initDataUnsafe.user.id;
-            if (ADMIN_IDS.includes(Number(userId))) {
-                localStorage.setItem('rp_admin_logged', 'true');
-                localStorage.setItem('rp_admin_name', tg.initDataUnsafe.user.first_name);
-                IS_ADMIN = true;
-            } else {
-                IS_ADMIN = false;
-                localStorage.removeItem('rp_admin_logged');
+        try {
+            const tg = window.Telegram.WebApp;
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const userId = tg.initDataUnsafe.user.id;
+                if (ADMIN_IDS.includes(Number(userId))) {
+                    localStorage.setItem('rp_admin_logged', 'true');
+                    localStorage.setItem('rp_admin_name', tg.initDataUnsafe.user.first_name);
+                    IS_ADMIN = true;
+                } else {
+                    IS_ADMIN = false;
+                    localStorage.removeItem('rp_admin_logged');
+                }
             }
+        } catch (e) {
+            console.log("Not in Telegram Mini App");
         }
 
         // Резервный вход (для браузера на ПК)
@@ -345,7 +349,7 @@
 
         // --- РЕНДЕР ТАБЛИЦ ---
         window.renderTables = function() {
-            const db = window.DB;
+            const db = window.DB || { holidays: [], citizens: [], mossad: [], interpol: [] };
             const buildRow = (item, type, keys) => {
                 let html = '<tr>';
                 keys.forEach(k => {
@@ -383,7 +387,7 @@
             }
         }
 
-        // --- ДОБАВЛЕНИЕ / УДАЛЕНИЕ ---
+        // --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
         let currentModalType = '';
         const fields = {
             holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата'}, {id:'start', p:'Начало'}, {id:'end', p:'Конец'}],
@@ -427,6 +431,7 @@
 
         window.onload = () => {
             if (IS_ADMIN) updateAdminUI();
+            else window.renderTables();
         };
     </script>
 </body>
