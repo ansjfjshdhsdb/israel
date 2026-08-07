@@ -122,7 +122,67 @@
             .modal-content { padding: 20px; }
             
             #mossad .page-header h2 { font-size: 1.6rem !important; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
         }
+
+        /* ================= НОВЫЕ АНИМАЦИИ И БЛОКИ ================= */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes floatY { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(12deg); } }
+        @keyframes bounceDown { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(12px); } }
+        @keyframes shimmerText { to { background-position: 200% center; } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 2px 5px rgba(0,0,0,0.2); } 50% { box-shadow: 0 0 18px rgba(212,175,55,0.7); } }
+
+        /* Оживление главной */
+        .hero { position: relative; overflow: hidden; }
+        .hero > h1, .hero > p, .hero > .hero-sub { position: relative; z-index: 2; }
+        .hero h1 {
+            background: linear-gradient(90deg, #ffffff 0%, var(--gold) 50%, #ffffff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(2px 4px 10px rgba(0,0,0,0.6));
+            animation: fadeInUp .8s ease both, shimmerText 5s linear infinite;
+        }
+        .hero p { animation: fadeInUp .8s .2s ease both; }
+        .hero .hero-sub { animation: fadeInUp .8s .4s ease both; }
+        .hero-decor span { position: absolute; color: rgba(212,175,55,0.35); font-size: 2rem; pointer-events: none; text-shadow: 0 0 15px rgba(212,175,55,0.4); animation: floatY 6s ease-in-out infinite; z-index: 1; }
+        .scroll-down { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.85); font-size: 1.8rem; cursor: pointer; z-index: 2; animation: bounceDown 1.6s infinite; }
+        .logo-container img { animation: pulseGlow 3s infinite; }
+        .btn:hover { transform: translateY(-2px); }
+
+        /* Кнопка редактирования */
+        .btn-edit { background: var(--israel-blue); padding: 8px 12px; }
+        .btn-edit:hover { background: #002a8c; }
+        .row-actions { display: inline-flex; gap: 6px; }
+
+        /* Галерея «Наша хата» */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .photo-card { position: relative; border-radius: 14px; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 3; background: #e9ecef; box-shadow: 0 6px 18px rgba(0,0,0,0.12); transition: transform .3s ease, box-shadow .3s ease; }
+        .photo-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 16px 32px rgba(0,0,0,0.22); }
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
+        .photo-card:hover img { transform: scale(1.08); }
+        .photo-card .caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 12px 10px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.85)); }
+        .photo-card .card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; opacity: 0; transition: .3s; }
+        .photo-card:hover .card-actions { opacity: 1; }
+
+        /* Лайтбокс (просмотр фото) */
+        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
+        .lightbox.active { display: flex; animation: fadeIn .3s ease; }
+        .lightbox img { max-width: 92%; max-height: 78vh; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .lightbox h3 { color: #fff; margin-top: 18px; }
+        .lightbox p { color: #ccc; max-width: 640px; text-align: center; margin-top: 6px; }
+        .lb-close { position: absolute; top: 18px; right: 28px; color: #fff; font-size: 2.4rem; line-height: 1; cursor: pointer; }
+
+        /* Блок описания «Наша хата» — читаемый на светлом фоне */
+        #houseInfoBox { background: #f8f9fa; color: var(--text-main); border-left-color: var(--israel-blue); text-align: left; }
+        #houseInfoBox #houseDesc { line-height: 1.7; }
+
+        /* Поля модалки: textarea и загрузка файла */
+        .modal textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; min-height: 80px; resize: vertical; font-family: inherit; outline: none; }
+        .modal textarea:focus { border-color: var(--israel-blue); }
+        .modal input[type=file] { width: 100%; margin-bottom: 15px; }
+        .img-preview { width: 100%; max-height: 190px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -136,6 +196,7 @@
             <button class="active" onclick="showTab('home')"><i class="fa-solid fa-house"></i> Главная</button>
             <button onclick="showTab('holidays')"><i class="fa-solid fa-calendar"></i> Праздники</button>
             <button onclick="showTab('citizens')"><i class="fa-solid fa-users"></i> Граждане</button>
+            <button onclick="showTab('house')"><i class="fa-solid fa-house-chimney-window"></i> Наша хата</button>
             <button onclick="showTab('mossad')"><i class="fa-solid fa-user-secret"></i> Моссад</button>
             <button onclick="showTab('interpol')"><i class="fa-solid fa-globe"></i> Интерпол</button>
             <button onclick="showTab('admin')" style="border: 2px solid var(--israel-blue); color: var(--israel-blue);"><i class="fa-solid fa-shield-halved"></i> Доступ</button>
@@ -146,9 +207,36 @@
         <!-- Главная -->
         <div id="home" class="section active">
             <div class="hero">
+                <div class="hero-decor">
+                    <span style="top:15%; left:10%; animation-delay:0s;">✡</span>
+                    <span style="top:25%; right:12%; animation-delay:1.2s;">✡</span>
+                    <span style="bottom:22%; left:18%; animation-delay:2.4s;">✡</span>
+                    <span style="bottom:30%; right:20%; animation-delay:.6s;">✡</span>
+                    <span style="top:45%; left:48%; animation-delay:1.8s;">✡</span>
+                </div>
                 <h1>Шалом!</h1>
                 <p>Официальный портал еврейской общины <strong style="color: var(--gold);">Ukraine RP</strong>.</p>
-                <h2>Ам Исраэль хай!</h2>
+                <h2 class="hero-sub">Ам Исраэль хай!</h2>
+                <i class="fa-solid fa-chevron-down scroll-down" onclick="showTab('house')" title="Смотреть дальше"></i>
+            </div>
+        </div>
+
+        <!-- Наша хата -->
+        <div id="house" class="section">
+            <div class="page-header">
+                <h2><i class="fa-solid fa-house-chimney-window" style="color: var(--gold);"></i> Наша хата</h2>
+                <div class="lore-box" id="houseInfoBox">
+                    <p id="houseAddress" style="font-size:1.1rem; margin-bottom:10px;"></p>
+                    <p id="houseDesc"></p>
+                    <button class="btn btn-edit admin-inline" style="margin-top:18px;" onclick="openHouseInfoModal()"><i class="fa-solid fa-pen"></i> Изменить описание</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-controls">
+                    <h3 style="color: var(--israel-blue);"><i class="fa-solid fa-images"></i> Галерея</h3>
+                    <button class="btn btn-add admin-inline" onclick="openModal('gallery')"><i class="fa-solid fa-camera"></i> Добавить фото</button>
+                </div>
+                <div class="gallery-grid" id="galleryGrid"></div>
             </div>
         </div>
 
@@ -274,6 +362,14 @@
         </div>
     </div>
 
+    <!-- Лайтбокс для просмотра фото -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lb-close">&times;</span>
+        <img id="lbImg" src="" alt="Фото" onclick="event.stopPropagation()">
+        <h3 id="lbTitle"></h3>
+        <p id="lbDesc"></p>
+    </div>
+
     <!-- Модуль Firebase (v10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -293,7 +389,7 @@
         const db = getDatabase(app);
         const dbRef = ref(db, 'ukraine_rp_database');
 
-        window.DB = { holidays: [], citizens: [], mossad: [], interpol: [] };
+        window.DB = { holidays: [], citizens: [], mossad: [], interpol: [], gallery: [], houseInfo: {} };
 
         // Слушаем изменения из Firebase в реальном времени
         onValue(dbRef, (snapshot) => {
@@ -303,7 +399,9 @@
                     holidays: data.holidays || [],
                     citizens: data.citizens || [],
                     mossad: data.mossad || [],
-                    interpol: data.interpol || []
+                    interpol: data.interpol || [],
+                    gallery: data.gallery || [],
+                    houseInfo: data.houseInfo || {}
                 };
             }
             window.renderTables(); // Обновляем таблицы при любых изменениях в облаке
@@ -377,17 +475,24 @@
         }
 
         // --- ВКЛАДКИ ---
-        function showTab(id) {
+        function showTab(id, evt) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links button').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
+            // Подсвечиваем кнопку: либо ту, что нажали, либо соответствующую вкладке
+            const trigger = (evt && evt.currentTarget) || (window.event && window.event.currentTarget);
+            if (trigger && trigger.classList.contains('nav-links')) trigger.classList.add('active');
+            else {
+                const btn = [...document.querySelectorAll('.nav-links button')].find(b => b.getAttribute('onclick') === `showTab('${id}')`);
+                if (trigger && trigger.tagName === 'BUTTON') trigger.classList.add('active');
+                else if (btn) btn.classList.add('active');
+            }
             window.scrollTo(0,0);
         }
 
         // --- РЕНДЕР ТАБЛИЦ ---
         window.renderTables = function() {
-            const db = window.DB || { holidays: [], citizens: [], mossad: [], interpol: [] };
+            const db = window.DB || { holidays: [], citizens: [], mossad: [], interpol: [], gallery: [], houseInfo: {} };
             const buildRow = (item, type, keys) => {
                 let html = '<tr>';
                 keys.forEach(k => {
@@ -400,9 +505,12 @@
                     }
                     html += `<td>${val}</td>`;
                 });
-                
+
                 if (IS_ADMIN) {
-                    html += `<td class="admin-only" style="display: table-cell;"><button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+                    html += `<td class="admin-only" style="display: table-cell;"><div class="row-actions">
+                        <button class="btn btn-edit" onclick="editData('${type}', ${item.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-del" onclick="deleteData('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button>
+                    </div></td>`;
                 } else {
                     html += `<td class="admin-only" style="display: none;"></td>`;
                 }
@@ -414,7 +522,49 @@
             document.getElementById('citizensBody').innerHTML = (db.citizens || []).map(i => buildRow(i, 'citizens', ['name', 'user', 'age', 'rel', 'loc', 'orig'])).join('');
             document.getElementById('mossadBody').innerHTML = (db.mossad || []).map(i => buildRow(i, 'mossad', ['name', 'user', 'pos', 'orig'])).join('');
             document.getElementById('interpolBody').innerHTML = (db.interpol || []).map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
+
+            renderHouse();
         }
+
+        // --- РЕНДЕР «НАША ХАТА» ---
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function renderHouse() {
+            const info = (window.DB && window.DB.houseInfo) || {};
+            document.getElementById('houseAddress').innerHTML = info.address
+                ? `<i class="fa-solid fa-location-dot" style="color:var(--gold);"></i> <strong>${esc(info.address)}</strong>`
+                : '<em style="color:#95a5a6;">Адрес пока не указан</em>';
+            document.getElementById('houseDesc').innerHTML = esc(info.desc || 'Здесь будет описание нашей хаты.').replace(/\n/g, '<br>');
+
+            const gallery = (window.DB && window.DB.gallery) || [];
+            const grid = document.getElementById('galleryGrid');
+            if (!gallery.length) {
+                grid.innerHTML = '<p style="color:#95a5a6; grid-column:1/-1; text-align:center; padding:30px;">Фотографий пока нет.</p>';
+                return;
+            }
+            grid.innerHTML = gallery.map(g => {
+                const admin = IS_ADMIN ? `<div class="card-actions">
+                    <button class="btn btn-edit" onclick="event.stopPropagation(); editData('gallery', ${g.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-del" onclick="event.stopPropagation(); deleteData('gallery', ${g.id})"><i class="fa-solid fa-trash"></i></button>
+                </div>` : '';
+                const cap = g.title ? `<div class="caption">${esc(g.title)}</div>` : '';
+                return `<div class="photo-card" onclick="openLightbox(${g.id})">
+                    <img src="${esc(g.img)}" alt="${esc(g.title || 'Фото')}" loading="lazy">
+                    ${cap}${admin}
+                </div>`;
+            }).join('');
+        }
+
+        // --- ЛАЙТБОКС ---
+        window.openLightbox = function(id) {
+            const g = (window.DB.gallery || []).find(x => x.id === id);
+            if (!g) return;
+            document.getElementById('lbImg').src = g.img;
+            document.getElementById('lbTitle').innerText = g.title || '';
+            document.getElementById('lbDesc').innerText = g.desc || '';
+            document.getElementById('lightbox').classList.add('active');
+        };
+        window.closeLightbox = function() { document.getElementById('lightbox').classList.remove('active'); };
 
         // --- ПОИСК ---
         function searchTable(input, bodyId) {
@@ -425,40 +575,140 @@
             }
         }
 
-        // --- ЛОГИКА ДОБАВЛЕНИЯ / УДАЛЕНИЯ ---
+        // --- ЛОГИКА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ / УДАЛЕНИЯ ---
         let currentModalType = '';
+        let editingId = null; // null = добавление, иначе id редактируемой записи
         const fields = {
             holidays: [{id:'name', p:'Название праздника'}, {id:'date', p:'Дата'}, {id:'start', p:'Начало'}, {id:'end', p:'Конец'}],
             citizens: [{id:'name', p:'Имя Фамилия'}, {id:'user', p:'TG / Discord'}, {id:'age', p:'Возраст', type:'number'}, {id:'rel', p:'Религиозный статус'}, {id:'loc', p:'Место'}, {id:'orig', p:'Откуда'}],
             mossad: [{id:'name', p:'Имя (Обычно: СЕКРЕТНО)'}, {id:'user', p:'Позывной / TG'}, {id:'pos', p:'Должность'}, {id:'orig', p:'Происхождение'}],
-            interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус'}, {id:'reason', p:'Причина / Статья'}]
+            interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус'}, {id:'reason', p:'Причина / Статья'}],
+            gallery: [{id:'img', p:'Фото', type:'image'}, {id:'title', p:'Подпись к фото'}, {id:'desc', p:'Описание', type:'textarea'}]
         };
 
-        function openModal(type) {
+        function openModal(type, data) {
             currentModalType = type;
+            editingId = data ? data.id : null;
             let html = '';
             fields[type].forEach(f => {
-                html += `<input type="${f.type || 'text'}" id="mod_${f.id}" placeholder="${f.p}" autocomplete="off">`;
+                const val = data && data[f.id] != null ? String(data[f.id]) : '';
+                if (f.type === 'textarea') {
+                    html += `<textarea id="mod_${f.id}" placeholder="${f.p}">${val.replace(/</g,'&lt;')}</textarea>`;
+                } else if (f.type === 'image') {
+                    html += `<img id="mod_preview" class="img-preview" ${val ? `src="${val}" style="display:block;"` : ''}>
+                        <input type="file" accept="image/*" onchange="handleImageUpload(this)">
+                        <input type="text" id="mod_${f.id}" placeholder="или вставьте ссылку на фото" value="${val.startsWith('data:') ? '' : val.replace(/"/g,'&quot;')}" oninput="previewFromUrl(this.value)" autocomplete="off">
+                        <input type="hidden" id="mod_img_data" value="${val.startsWith('data:') ? val : ''}">`;
+                } else {
+                    html += `<input type="${f.type || 'text'}" id="mod_${f.id}" placeholder="${f.p}" value="${val.replace(/"/g,'&quot;')}" autocomplete="off">`;
+                }
             });
+            document.getElementById('modalTitle').innerText = (editingId ? 'Изменить запись' : 'Добавить запись');
             document.getElementById('modalInputs').innerHTML = html;
             document.getElementById('modal').classList.add('active');
         }
 
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        // Загрузка фото с устройства + сжатие в браузере
+        window.handleImageUpload = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const MAX = 1000;
+                    let { width, height } = img;
+                    if (width > MAX || height > MAX) {
+                        if (width > height) { height = height * MAX / width; width = MAX; }
+                        else { width = width * MAX / height; height = MAX; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    document.getElementById('mod_img_data').value = dataUrl;
+                    const prev = document.getElementById('mod_preview');
+                    prev.src = dataUrl; prev.style.display = 'block';
+                    const urlField = document.getElementById('mod_img');
+                    if (urlField) urlField.value = '';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.previewFromUrl = function(url) {
+            const prev = document.getElementById('mod_preview');
+            document.getElementById('mod_img_data').value = '';
+            if (url && url.trim()) { prev.src = url.trim(); prev.style.display = 'block'; }
+            else { prev.style.display = 'none'; }
+        };
+
+        function closeModal() { document.getElementById('modal').classList.remove('active'); editingId = null; }
 
         function saveData() {
-            let newItem = { id: Date.now() };
+            // Особый случай: описание «Наша хата»
+            if (currentModalType === 'houseInfo') {
+                window.DB.houseInfo = {
+                    address: document.getElementById('house_address').value.trim(),
+                    desc: document.getElementById('house_desc').value.trim()
+                };
+                window.saveToFirebase();
+                closeModal();
+                return;
+            }
+
+            const item = {};
             fields[currentModalType].forEach(f => {
-                let val = document.getElementById(`mod_${f.id}`).value.trim();
-                newItem[f.id] = val !== "" ? val : "-";
+                if (f.type === 'image') {
+                    const data = document.getElementById('mod_img_data').value;
+                    const url = document.getElementById('mod_img').value.trim();
+                    item[f.id] = data || url || '';
+                } else {
+                    let val = document.getElementById(`mod_${f.id}`).value.trim();
+                    // В галерее подпись/описание могут быть пустыми, в таблицах ставим "-"
+                    item[f.id] = val !== "" ? val : (currentModalType === 'gallery' ? "" : "-");
+                }
             });
 
+            if (currentModalType === 'gallery' && !item.img) {
+                alert('Добавьте фото — загрузите файл или вставьте ссылку.');
+                return;
+            }
+
             if(!window.DB[currentModalType]) window.DB[currentModalType] = [];
-            window.DB[currentModalType].push(newItem);
-            
+
+            if (editingId) {
+                // Редактирование: находим запись и обновляем поля (id сохраняем)
+                const idx = window.DB[currentModalType].findIndex(x => x.id === editingId);
+                if (idx !== -1) window.DB[currentModalType][idx] = { ...window.DB[currentModalType][idx], ...item, id: editingId };
+            } else {
+                item.id = Date.now();
+                window.DB[currentModalType].push(item);
+            }
+
             window.saveToFirebase(); // Отправляем в облако
             closeModal();
         }
+
+        // Открыть модалку в режиме редактирования существующей записи
+        window.editData = function(type, id) {
+            const rec = (window.DB[type] || []).find(x => x.id === id);
+            if (rec) openModal(type, rec);
+        };
+
+        // --- ОПИСАНИЕ «НАША ХАТА» ---
+        window.openHouseInfoModal = function() {
+            const info = window.DB.houseInfo || {};
+            const html = `
+                <input type="text" id="house_address" placeholder="Адрес / где находится хата" value="${(info.address||'').replace(/"/g,'&quot;')}" autocomplete="off">
+                <textarea id="house_desc" placeholder="Описание хаты">${(info.desc||'').replace(/</g,'&lt;')}</textarea>`;
+            document.getElementById('modalTitle').innerText = 'Описание хаты';
+            document.getElementById('modalInputs').innerHTML = html;
+            currentModalType = 'houseInfo';
+            editingId = null;
+            document.getElementById('modal').classList.add('active');
+        };
 
         window.deleteData = function(type, id) {
             if (confirm("Внимание: Запись будет удалена у всех пользователей сервера. Продолжить?")) {
