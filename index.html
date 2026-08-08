@@ -178,6 +178,21 @@
         #houseInfoBox { background: #f8f9fa; color: var(--text-main); border-left-color: var(--israel-blue); text-align: left; }
         #houseInfoBox #houseDesc { line-height: 1.7; }
 
+        /* ===== Раздел «Гиюр» ===== */
+        .giyur-intro { max-width: 900px; margin: 0 auto 35px; background: #f8f9fa; border-left: 4px solid var(--gold); border-radius: 8px; padding: 25px 28px; line-height: 1.75; text-align: justify; }
+        .giyur-intro .heb { color: var(--israel-blue); font-weight: 600; }
+        .steps-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; padding: 0 20px; }
+        .step-card { position: relative; background: var(--surface); border-radius: 14px; padding: 28px 24px 24px; box-shadow: 0 6px 20px rgba(0,0,0,0.07); border-top: 4px solid var(--israel-blue); transition: transform .3s ease, box-shadow .3s ease; overflow: hidden; }
+        .step-card:hover { transform: translateY(-6px); box-shadow: 0 16px 34px rgba(0,0,0,0.13); }
+        .step-card .step-num { position: absolute; top: -18px; right: -6px; font-size: 5rem; font-weight: 800; font-family: 'Montserrat', sans-serif; color: rgba(0,56,184,0.06); line-height: 1; }
+        .step-card .step-icon { font-size: 2rem; color: var(--gold); margin-bottom: 14px; }
+        .step-card h3 { color: var(--israel-blue); margin-bottom: 4px; font-size: 1.25rem; }
+        .step-card .heb { display: block; color: var(--gold); font-weight: 600; font-size: 1rem; margin-bottom: 12px; direction: rtl; }
+        .step-card p { color: #555; line-height: 1.6; font-size: 0.95rem; position: relative; z-index: 1; }
+        .giyur-note { max-width: 900px; margin: 40px auto 0; text-align: center; padding: 0 20px; color: #636e72; font-style: italic; }
+        .step-actions { display: flex; gap: 8px; margin-top: 16px; position: relative; z-index: 1; }
+        .step-actions .btn { padding: 6px 12px; font-size: 0.85rem; }
+
         /* Поля модалки: textarea и загрузка файла */
         .modal textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; min-height: 80px; resize: vertical; font-family: inherit; outline: none; }
         .modal textarea:focus { border-color: var(--israel-blue); }
@@ -196,6 +211,7 @@
             <button class="active" onclick="showTab('home')"><i class="fa-solid fa-house"></i> Главная</button>
             <button onclick="showTab('holidays')"><i class="fa-solid fa-calendar"></i> Праздники</button>
             <button onclick="showTab('citizens')"><i class="fa-solid fa-users"></i> Граждане</button>
+            <button onclick="showTab('giyur')"><i class="fa-solid fa-star-of-david"></i> Гиюр</button>
             <button onclick="showTab('house')"><i class="fa-solid fa-house-chimney-window"></i> Наша хата</button>
             <button onclick="showTab('mossad')"><i class="fa-solid fa-user-secret"></i> Моссад</button>
             <button onclick="showTab('interpol')"><i class="fa-solid fa-globe"></i> Интерпол</button>
@@ -219,6 +235,23 @@
                 <h2 class="hero-sub">Ам Исраэль хай!</h2>
                 <i class="fa-solid fa-chevron-down scroll-down" onclick="showTab('house')" title="Смотреть дальше"></i>
             </div>
+        </div>
+
+        <!-- Гиюр -->
+        <div id="giyur" class="section">
+            <div class="page-header">
+                <h2><i class="fa-solid fa-star-of-david" style="color: var(--gold);"></i> Гиюр <span style="color:var(--gold);">(גיור)</span></h2>
+                <p>Путь принятия иудаизма</p>
+            </div>
+            <div class="giyur-intro" id="giyurIntro"></div>
+
+            <div class="table-controls" style="max-width:1100px; margin:0 auto 20px; padding:0 20px; justify-content:flex-end;">
+                <button class="btn btn-add admin-inline" onclick="openModal('giyur')"><i class="fa-solid fa-plus"></i> Добавить пункт</button>
+            </div>
+
+            <div class="steps-grid" id="giyurGrid"></div>
+
+            <p class="giyur-note" id="giyurNote"></p>
         </div>
 
         <!-- Наша хата -->
@@ -389,7 +422,7 @@
         const db = getDatabase(app);
         const dbRef = ref(db, 'ukraine_rp_database');
 
-        window.DB = { holidays: [], citizens: [], mossad: [], interpol: [], gallery: [], houseInfo: {} };
+        window.DB = { holidays: [], citizens: [], mossad: [], interpol: [], gallery: [], houseInfo: {}, giyur: [], giyurInfo: {} };
 
         // Слушаем изменения из Firebase в реальном времени
         onValue(dbRef, (snapshot) => {
@@ -401,7 +434,9 @@
                     mossad: data.mossad || [],
                     interpol: data.interpol || [],
                     gallery: data.gallery || [],
-                    houseInfo: data.houseInfo || {}
+                    houseInfo: data.houseInfo || {},
+                    giyur: data.giyur || [],
+                    giyurInfo: data.giyurInfo || {}
                 };
             }
             window.renderTables(); // Обновляем таблицы при любых изменениях в облаке
@@ -524,10 +559,99 @@
             document.getElementById('interpolBody').innerHTML = (db.interpol || []).map(i => buildRow(i, 'interpol', ['user', 'pos', 'reason'])).join('');
 
             renderHouse();
+            renderGiyur();
         }
 
         // --- РЕНДЕР «НАША ХАТА» ---
         function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        // --- РЕНДЕР «ГИЮР» ---
+        const GIYUR_ICONS = ['fa-heart','fa-book-open','fa-scroll','fa-gavel','fa-hand-holding-medical','fa-water','fa-star-of-david','fa-menorah','fa-dove','fa-hands-praying'];
+
+        // Иконки, доступные для выбора в форме пункта
+        const ICON_OPTIONS = [
+            {icon:'fa-heart', label:'❤ Сердце / желание'},
+            {icon:'fa-book-open', label:'📖 Книга / Тора'},
+            {icon:'fa-scroll', label:'📜 Свиток / заповеди'},
+            {icon:'fa-gavel', label:'⚖ Суд / Бейт-дин'},
+            {icon:'fa-hand-holding-medical', label:'✋ Брит-мила'},
+            {icon:'fa-water', label:'💧 Миква / вода'},
+            {icon:'fa-star-of-david', label:'✡ Звезда Давида'},
+            {icon:'fa-menorah', label:'🕎 Менора'},
+            {icon:'fa-dove', label:'🕊 Голубь / мир'},
+            {icon:'fa-hands-praying', label:'🙏 Молитва'},
+            {icon:'fa-synagogue', label:'🏛 Синагога'},
+            {icon:'fa-graduation-cap', label:'🎓 Обучение'}
+        ];
+
+        // Стандартные пункты гиюра (заливаются в Firebase один раз)
+        const DEFAULT_GIYUR = [
+            {title:'Искреннее желание', heb:'רצון כן', icon:'fa-heart', desc:'Всё начинается с осознанного и искреннего стремления присоединиться к еврейскому народу — не ради выгоды, а по велению сердца.'},
+            {title:'Изучение Торы', heb:'לימוד תורה', icon:'fa-book-open', desc:'Кандидат изучает основы иудаизма: Тору, заповеди (мицвот), традиции, праздники, законы кашрута и субботы.'},
+            {title:'Принятие заповедей', heb:'קבלת מצוות', icon:'fa-scroll', desc:'Готовность соблюдать 613 заповедей и жить по законам Торы — ключевое условие гиюра.'},
+            {title:'Бейт-дин', heb:'בית דין', icon:'fa-gavel', desc:'Кандидат предстаёт перед раввинским судом из трёх судей, которые оценивают искренность намерений и знания.'},
+            {title:'Брит-мила', heb:'ברית מילה', icon:'fa-hand-holding-medical', desc:'Для мужчин — обрезание как знак союза с Богом (для уже обрезанных проводится символическая процедура).'},
+            {title:'Погружение в микву', heb:'טבילה', icon:'fa-water', desc:'Завершающий этап — окунание в ритуальный бассейн (микву). После этого человек считается полноценным евреем.'}
+        ];
+
+        let giyurSeeded = false;
+        function seedGiyurIfEmpty() {
+            if (giyurSeeded || !IS_ADMIN || !window.DB) return;
+            const info = window.DB.giyurInfo || {};
+            if ((window.DB.giyur || []).length > 0 || info.seeded) { giyurSeeded = true; return; }
+            giyurSeeded = true;
+            const base = Date.now();
+            window.DB.giyur = DEFAULT_GIYUR.map((s, i) => ({ ...s, id: base + i }));
+            window.DB.giyurInfo = { ...info, seeded: true };
+            window.saveToFirebase();
+        }
+
+        function renderGiyur() {
+            seedGiyurIfEmpty();
+            const info = (window.DB && window.DB.giyurInfo) || {};
+            const introDefault = 'Гиюр (גיור) — процесс перехода в иудаизм и присоединения к еврейскому народу. Здесь можно описать порядок и условия гиюра в нашей общине.';
+            const editBtn = IS_ADMIN ? `<button class="btn btn-edit admin-inline" style="display:inline-flex; margin-top:16px;" onclick="openGiyurInfoModal()"><i class="fa-solid fa-pen"></i> Изменить вступление</button>` : '';
+            document.getElementById('giyurIntro').innerHTML =
+                `<p>${esc(info.text || introDefault).replace(/\n/g,'<br>')}</p>${editBtn}`;
+
+            document.getElementById('giyurNote').innerText = info.note || '«Ам Исраэль хай!» — Народ Израиля жив.';
+
+            const steps = (window.DB && window.DB.giyur) || [];
+            const grid = document.getElementById('giyurGrid');
+            if (!steps.length) {
+                grid.innerHTML = `<p style="color:#95a5a6; grid-column:1/-1; text-align:center; padding:30px;">${IS_ADMIN ? 'Пунктов пока нет — нажмите «Добавить пункт».' : 'Пункты пока не добавлены.'}</p>`;
+                return;
+            }
+            grid.innerHTML = steps.map((s, i) => {
+                const icon = s.icon || GIYUR_ICONS[i % GIYUR_ICONS.length];
+                const heb = s.heb && s.heb !== '-' ? `<span class="heb">${esc(s.heb)}</span>` : '';
+                const admin = IS_ADMIN ? `<div class="step-actions">
+                    <button class="btn btn-edit" onclick="editData('giyur', ${s.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-del" onclick="deleteData('giyur', ${s.id})"><i class="fa-solid fa-trash"></i></button>
+                </div>` : '';
+                return `<div class="step-card">
+                    <span class="step-num">${i + 1}</span>
+                    <div class="step-icon"><i class="fa-solid ${esc(icon)}"></i></div>
+                    <h3>${esc(s.title)}</h3>
+                    ${heb}
+                    <p>${esc(s.desc).replace(/\n/g,'<br>')}</p>
+                    ${admin}
+                </div>`;
+            }).join('');
+        }
+
+        // Изменить вступление/подпись раздела «Гиюр»
+        window.openGiyurInfoModal = function() {
+            const info = window.DB.giyurInfo || {};
+            const html = `
+                <textarea id="giyur_text" placeholder="Вступительный текст" style="min-height:120px;">${(info.text||'').replace(/</g,'&lt;')}</textarea>
+                <input type="text" id="giyur_note" placeholder="Подпись внизу (необязательно)" value="${(info.note||'').replace(/"/g,'&quot;')}" autocomplete="off">`;
+            document.getElementById('modalTitle').innerText = 'Вступление раздела «Гиюр»';
+            document.getElementById('modalInputs').innerHTML = html;
+            currentModalType = 'giyurInfo';
+            editingId = null;
+            document.getElementById('modal').classList.add('active');
+        };
 
         function renderHouse() {
             const info = (window.DB && window.DB.houseInfo) || {};
@@ -583,7 +707,8 @@
             citizens: [{id:'name', p:'Имя Фамилия'}, {id:'user', p:'TG / Discord'}, {id:'age', p:'Возраст', type:'number'}, {id:'rel', p:'Религиозный статус'}, {id:'loc', p:'Место'}, {id:'orig', p:'Откуда'}],
             mossad: [{id:'name', p:'Имя (Обычно: СЕКРЕТНО)'}, {id:'user', p:'Позывной / TG'}, {id:'pos', p:'Должность'}, {id:'orig', p:'Происхождение'}],
             interpol: [{id:'user', p:'Username'}, {id:'pos', p:'Статус'}, {id:'reason', p:'Причина / Статья'}],
-            gallery: [{id:'img', p:'Фото', type:'image'}, {id:'title', p:'Подпись к фото'}, {id:'desc', p:'Описание', type:'textarea'}]
+            gallery: [{id:'img', p:'Фото', type:'image'}, {id:'title', p:'Подпись к фото'}, {id:'desc', p:'Описание', type:'textarea'}],
+            giyur: [{id:'title', p:'Название пункта'}, {id:'heb', p:'На иврите (необязательно)'}, {id:'icon', p:'Иконка', type:'icon'}, {id:'desc', p:'Описание пункта', type:'textarea'}]
         };
 
         function openModal(type, data) {
@@ -594,6 +719,13 @@
                 const val = data && data[f.id] != null ? String(data[f.id]) : '';
                 if (f.type === 'textarea') {
                     html += `<textarea id="mod_${f.id}" placeholder="${f.p}">${val.replace(/</g,'&lt;')}</textarea>`;
+                } else if (f.type === 'icon') {
+                    const opts = ICON_OPTIONS.map(o => `<option value="${o.icon}" ${o.icon === val ? 'selected' : ''}>${o.label}</option>`).join('');
+                    html += `<label style="display:block; font-size:0.85rem; color:#666; margin-bottom:6px;">Иконка пункта:</label>
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:15px;">
+                            <i id="mod_icon_preview" class="fa-solid ${val || 'fa-star-of-david'}" style="font-size:1.8rem; color:var(--gold); width:30px; text-align:center;"></i>
+                            <select id="mod_${f.id}" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:6px; font-size:0.95rem;" onchange="document.getElementById('mod_icon_preview').className='fa-solid '+this.value">${opts}</select>
+                        </div>`;
                 } else if (f.type === 'image') {
                     html += `<img id="mod_preview" class="img-preview" ${val ? `src="${val}" style="display:block;"` : ''}>
                         <input type="file" accept="image/*" onchange="handleImageUpload(this)">
@@ -652,6 +784,17 @@
                 window.DB.houseInfo = {
                     address: document.getElementById('house_address').value.trim(),
                     desc: document.getElementById('house_desc').value.trim()
+                };
+                window.saveToFirebase();
+                closeModal();
+                return;
+            }
+
+            // Особый случай: вступление раздела «Гиюр»
+            if (currentModalType === 'giyurInfo') {
+                window.DB.giyurInfo = {
+                    text: document.getElementById('giyur_text').value.trim(),
+                    note: document.getElementById('giyur_note').value.trim()
                 };
                 window.saveToFirebase();
                 closeModal();
