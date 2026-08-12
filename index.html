@@ -193,23 +193,24 @@
         #mossad .badge.gold { background: rgba(212,175,55,.16); color: #f0d27a; }
 
         /* ================= КНОПКИ ================= */
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 20px; border: 0; border-radius: var(--radius-sm); background: var(--israel-blue); color: #fff; font-weight: 700; font-size: .92rem; cursor: pointer; text-decoration: none; transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease), opacity .2s; box-shadow: 0 4px 12px rgba(0,56,184,.22); }
-        .btn:hover { transform: translateY(-2px); background: var(--blue-700); box-shadow: 0 10px 22px rgba(0,56,184,.28); }
-        .btn:active { transform: translateY(0); }
-        .btn[disabled] { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-add { background: linear-gradient(135deg, var(--success), #12b886); box-shadow: 0 4px 12px rgba(12,166,120,.25); }
-        .btn-add:hover { background: linear-gradient(135deg, #0b9268, #0ca678); box-shadow: 0 10px 22px rgba(12,166,120,.3); }
-        .btn-del { background: linear-gradient(135deg, var(--danger), #f03e3e); box-shadow: 0 4px 12px rgba(224,49,49,.25); }
-        .btn-del:hover { background: #c92a2a; box-shadow: 0 10px 22px rgba(224,49,49,.3); }
-        .btn-edit { background: linear-gradient(135deg, var(--israel-blue), var(--blue-600)); }
-        .btn-gold { background: linear-gradient(135deg, var(--gold), #e5c25a); color: #221a00; box-shadow: 0 4px 12px rgba(212,175,55,.3); }
-        .btn-gold:hover { background: #c79f24; color: #221a00; }
-        .btn-ghost { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
-        .btn-ghost:hover { background: #eef1f7; color: var(--text); box-shadow: inset 0 0 0 1px #d5dbe6; }
-        .btn-light { background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.35); backdrop-filter: blur(4px); }
-        .btn-light:hover { background: rgba(255,255,255,.24); color: #fff; }
-        .btn-icon { padding: 9px 12px; box-shadow: none; }
-        .btn-sm { padding: 7px 14px; font-size: .84rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 22px; border: 0; border-radius: var(--radius-sm); background: var(--israel-blue); color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .86rem; text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer; text-decoration: none; transition: transform .25s var(--ease), box-shadow .25s var(--ease), filter .25s var(--ease); box-shadow: 0 4px 14px rgba(0,56,184,.25), inset 0 1px 0 rgba(255,255,255,.15); line-height: 1.2; }
+        .btn i { font-size: 1.15em; display: flex; align-items: center; justify-content: center; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0,56,184,.35), inset 0 1px 0 rgba(255,255,255,.2); filter: brightness(1.08); }
+        .btn:active { transform: translateY(0); box-shadow: 0 4px 10px rgba(0,56,184,.2); filter: brightness(0.95); }
+        .btn[disabled] { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+        .btn-add { background: linear-gradient(135deg, #12b886, #0ca678); box-shadow: 0 4px 14px rgba(12,166,120,.25), inset 0 1px 0 rgba(255,255,255,.15); }
+        .btn-add:hover { box-shadow: 0 10px 22px rgba(12,166,120,.35), inset 0 1px 0 rgba(255,255,255,.2); }
+        .btn-del { background: linear-gradient(135deg, #fa5252, #e03131); box-shadow: 0 4px 14px rgba(224,49,49,.25), inset 0 1px 0 rgba(255,255,255,.15); }
+        .btn-del:hover { box-shadow: 0 10px 22px rgba(224,49,49,.35), inset 0 1px 0 rgba(255,255,255,.2); }
+        .btn-edit { background: linear-gradient(135deg, var(--blue-600), var(--blue-700)); }
+        .btn-gold { background: linear-gradient(135deg, #fce085, #d4af37); color: #3a2b00; box-shadow: 0 4px 14px rgba(212,175,55,.3), inset 0 1px 0 rgba(255,255,255,.4); text-shadow: 0 1px 0 rgba(255,255,255,.3); }
+        .btn-gold:hover { box-shadow: 0 10px 22px rgba(212,175,55,.45), inset 0 1px 0 rgba(255,255,255,.4); }
+        .btn-ghost { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--line); }
+        .btn-ghost:hover { background: var(--surface); color: var(--israel-blue); box-shadow: inset 0 0 0 1.5px var(--israel-blue); }
+        .btn-light { background: rgba(255,255,255,.12); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.4); backdrop-filter: blur(8px); }
+        .btn-light:hover { background: rgba(255,255,255,.25); box-shadow: inset 0 0 0 1.5px #fff; }
+        .btn-icon { padding: 9px; box-shadow: none; border-radius: 12px; }
+        .btn-sm { padding: 8px 16px; font-size: .78rem; }
         .btn-block { width: 100%; }
         .btn .spin { animation: spin .8s linear infinite; }
 
@@ -885,6 +886,15 @@
             renderGallery();
             renderHouseInfo();
             renderGiyur();
+            
+            const elCit = document.getElementById('statCitizens');
+            if (elCit) elCit.textContent = (DB.citizens || []).length;
+            
+            const elHol = document.getElementById('statHolidays');
+            if (elHol) elHol.textContent = (DB.holidays || []).length;
+            
+            const elPho = document.getElementById('statPhotos');
+            if (elPho) elPho.textContent = (DB.gallery || []).length;
         }
 
         /* ---------- Поиск ---------- */
